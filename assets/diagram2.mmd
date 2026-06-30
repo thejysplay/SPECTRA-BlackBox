@@ -1,0 +1,10 @@
+flowchart TD
+    cat["probe_catalog.yaml"]
+    cat -->|"R1 고정질문"| col1["collect 수집"]
+    col1 --> cls1["classify 복원"]
+    cls1 --> lv{"liveness 게이트<br/>응답 다양성 낮으면 stub"}
+    lv -->|"stub"| stop["조기 종료 · P2~P5 생략"]
+    lv -->|"live"| gen["generate_r2 · Gemini 심화질문"]
+    gen --> col2["collect R2 수집"]
+    col2 --> cls2["classify 최종"]
+    cls2 --> spec["Agent Spec<br/>identity · capability · boundary<br/>memory · injection · recon_pool"]

@@ -1,0 +1,13 @@
+flowchart TD
+    subgraph inspector["인스펙터 · 블랙박스 (정답 모름)"]
+        tr["traces.jsonl"] --> j["judge_one 자동판정"]
+        base["arg_baseline (P1 관측 인자범위)"] --> j
+        j --> er["exploit_result.yaml<br/>scope_breach · injection · leakage"]
+    end
+
+    subgraph evaluator["평가자 · 정답 보유 (채점)"]
+        gtsrc["prompts.js 박힌 비밀 (ground truth)"] --> score["score_gt.py"]
+        score --> result["공격 성공 4/4<br/>비밀 실제 노출 여부"]
+    end
+
+    er -.->|"false negative 보완"| score

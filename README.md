@@ -20,30 +20,7 @@
 
 ## 아키텍처 다이어그램
 
-```mermaid
-flowchart TD
-    target(["대상 LLM 에이전트"])
-    adapter["make_adapter(url)"]
-    adapter -->|"Streamlit T1 / API T0"| target
-
-    P1["P1 · 정찰"]
-    P2["P2 · 스코핑"]
-    P3["P3 · 시나리오 생성"]
-    P4["P4 · 실행·수집"]
-    P5["P5 · 판정"]
-    GT["score_gt.py · ground truth 채점"]
-
-    P1 --> RP["recovered_profile.yaml (Agent Spec)"]
-    RP --> P2 --> TM["threat_mapping.yaml"]
-    TM --> P3 --> SC["scenarios.yaml"]
-    SC --> P4 --> TR["traces.jsonl"]
-    TR --> P5 --> ER["exploit_result.yaml"]
-    ER --> GT
-    TR --> GT
-
-    P1 -.->|"질의"| adapter
-    P4 -.->|"공격 실행"| adapter
-```
+![전체 파이프라인 흐름도](assets/diagram1.png)
 
 각 단계(P1~P5)·어댑터의 상세 아키텍처는 **[DIAGRAMS.md](DIAGRAMS.md)** 참고.
 
