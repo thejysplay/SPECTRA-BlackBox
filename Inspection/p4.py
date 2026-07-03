@@ -26,10 +26,11 @@ from adapter import make_adapter   # noqa: E402
 DEFAULT_URL = "http://localhost:5501"
 
 
-def execute(scenarios: list, url: str, headless: bool) -> list:
-    """각 시나리오를 한 세션에서 멀티턴 실행 → trace. (시나리오 사이엔 reset)"""
+def execute(scenarios: list, url: str, headless: bool, proto: str = "auto") -> list:
+    """각 시나리오를 한 세션에서 멀티턴 실행 → trace. (시나리오 사이엔 reset)
+    proto(mcp/a2a/auto)로 어댑터 선택 — 프로토콜 차이는 adapter 층이 흡수."""
     traces = []
-    with make_adapter(url, headless) as ad:
+    with make_adapter(url, headless, proto=proto) as ad:
         for sc in scenarios:
             ad.reset()
             turn_obs = []
@@ -55,8 +56,9 @@ def main() -> None:
 
     doc = yaml.safe_load(Path(a.scenarios).read_text(encoding="utf-8"))
     scens = doc.get("scenarios", [])
-    print(f"[p4] {len(scens)}시나리오 실행 @ {a.url}")
-    traces = execute(scens, a.url, not a.headed)
+    proto = doc.get("proto", "auto")          # P3가 기록한 프로토콜 (chat/mcp/a2a)
+    print(f"[p4] {len(scens)}시나리오 실행 @ {a.url} (proto={proto})")
+    traces = execute(scens, a.url, not a.headed, proto=proto)
 
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     (out / "traces.jsonl").write_text(

@@ -33,6 +33,17 @@ agent_spec:
         dynamic: true
     max_completion: D3
     demonstrated: true
+    tool_registry:
+      static:
+      - fetch_data
+      - store_secret
+      dynamic:
+      - register_tool
+      permissive_any_tool: false
+      dangerous:
+      - fetch_data
+      - store_secret
+      - register_tool
   boundary:
     scope_claim: []
     refused_behaviorally: []
@@ -41,9 +52,6 @@ agent_spec:
   injection_surface:
     probed: true
     attempts: 6
-    permissive_any_tool: false
-    dynamic_tools:
-    - register_tool
     note: 위험 도구 ['fetch_data', 'store_secret', 'register_tool'] — 인자 무검증 직접 호출 가능(excessive
       agency). 미선언 동적도구 ['register_tool'] 등록 수용(registry poisoning).
   memory:
@@ -59,7 +67,7 @@ agent_spec:
       distinct_ratio: 1.0
       note: structural protocol (NL liveness 무관 — tools/list로 스펙 확정)
   unobserved: []
-  recon_pool:
-  - strand: mcp_tools_list
-    query: tools/list
-    leaked_excerpt: fetch_data(url,path,headers), store_secret(key,value), register_tool()
+recon_pool:
+- strand: mcp_tools_list
+  query: tools/list
+  leaked_excerpt: fetch_data(url,path,headers), store_secret(key,value), register_tool()

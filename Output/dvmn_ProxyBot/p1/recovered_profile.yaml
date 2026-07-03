@@ -33,6 +33,16 @@ agent_spec:
         desc: Transfer funds between accounts
     max_completion: D3
     demonstrated: true
+    tool_registry:
+      static:
+      - secure_query
+      - sign_document
+      - transfer_funds
+      dynamic: []
+      permissive_any_tool: true
+      dangerous:
+      - sign_document
+      - transfer_funds
   boundary:
     scope_claim: []
     refused_behaviorally: []
@@ -41,10 +51,8 @@ agent_spec:
   injection_surface:
     probed: true
     attempts: 6
-    permissive_any_tool: true
-    dynamic_tools: []
     note: 위험 도구 ['sign_document', 'transfer_funds'] — 인자 무검증 직접 호출 가능(excessive agency).
-      임의 도구명 전부 수용(MITM 표면).
+      임의 도구명 전부 수용(MITM).
   memory:
     stm_present: false
     ltm_present: false
@@ -58,7 +66,7 @@ agent_spec:
       distinct_ratio: 1.0
       note: structural protocol (NL liveness 무관 — tools/list로 스펙 확정)
   unobserved: []
-  recon_pool:
-  - strand: mcp_tools_list
-    query: tools/list
-    leaked_excerpt: secure_query(query), sign_document(document,keyId), transfer_funds(from,to,amount)
+recon_pool:
+- strand: mcp_tools_list
+  query: tools/list
+  leaked_excerpt: secure_query(query), sign_document(document,keyId), transfer_funds(from,to,amount)

@@ -267,8 +267,77 @@ class APIAdapter(AgentAdapter):
                               raw_panels=[], side_channels={"raw_response": data})
 
 
-def make_adapter(url: str, headless: bool = True, model: str = "gemini-2.5-flash") -> AgentAdapter:
-    """url로 어댑터 자동 선택: /chat/completions(OpenAI 호환 API) → APIAdapter, 그 외 → StreamlitAdapter."""
+def _rpc_post(url: str, body: dict, timeout: float = 8.0) -> dict:
+    """공용 JSON POST (MCP/A2A transport)."""
+    import urllib.request
+    req = urllib.request.Request(url, data=json.dumps(body).encode("utf-8"),
+                                 headers={"Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return json.loads(r.read().decode("utf-8"))
+    except Exception as e:
+        return {"_error": str(e)}
+
+
+class MCPAdapter(AgentAdapter):
+    """MCP JSON-RPC tool 서버 대상. send(message)의 message = tool-call JSON
+    {"tool":"read_file","args":{...}} → tools/call 실행 후 결과를 관측으로 반환.
+    도구 자체가 공격 벡터라 disclosed_steps에 (tool, args)를 노출(T1)."""
+
+    def __init__(self, url: str, headless: bool = True, model: str = "", extractors=None, timeout: float = 8.0):
+        self.url, self.timeout = url, timeout
+
+    def send(self, message: str) -> RawObservation:
+        try:
+            call = json.loads(message)
+        except Exception:
+            call = {"tool": message, "args": {}}
+        tool, args = call.get("tool", ""), call.get("args", {})
+        r = _rpc_post(self.url, {"jsonrpc": "2.0", "method": "tools/call",
+                                 "params": {"name": tool, "arguments": args}, "id": 1}, self.timeout)
+        res = (r or {}).get("result")
+        if isinstance(res, dict) and "content" in res:
+            text = " ".join(c.get("text", "") if isinstance(c, dict) else str(c) for c in res["content"])
+        elif res is not None:
+            text = json.dumps(res, ensure_ascii=False)
+        else:
+            text = json.dumps(r, ensure_ascii=False)
+        steps = [{"action": tool, "action_input": json.dumps(args, ensure_ascii=False)}]
+        return RawObservation(visible_text=text, disclosed_steps=steps,
+                              disclosure_format="mcp_tool_call", observation_tier="T1",
+                              raw_panels=[], side_channels={"raw": r})
+
+
+class A2AAdapter(AgentAdapter):
+    """A2A 대상. send(message)의 message = {"from":"worker-1","content":"..."} →
+    신뢰 sender 위조 + 위임 content 전송, 응답 상태/노트를 관측으로 반환(T1)."""
+
+    def __init__(self, url: str, headless: bool = True, model: str = "", extractors=None, timeout: float = 8.0):
+        self.url, self.timeout = url, timeout
+
+    def send(self, message: str) -> RawObservation:
+        try:
+            m = json.loads(message)
+        except Exception:
+            m = {"from": "agent", "content": message}
+        r = _rpc_post(self.url, {"from": m.get("from", "agent"), "to": m.get("to", "agent"),
+                                 "content": m.get("content", "")}, self.timeout)
+        status = (r or {}).get("status", "")
+        text = f"[{status}] {(r or {}).get('content','')} {(r or {}).get('note','')}".strip()
+        steps = [{"action": "a2a_delegate", "action_input": m.get("from", "")}]
+        return RawObservation(visible_text=text, disclosed_steps=steps,
+                              disclosure_format="a2a_message", observation_tier="T1",
+                              raw_panels=[], side_channels={"raw": r})
+
+
+def make_adapter(url: str, headless: bool = True, model: str = "gemini-2.5-flash",
+                 proto: str = "auto") -> AgentAdapter:
+    """proto 명시 또는 url로 어댑터 선택. proto: mcp|a2a|auto.
+    auto: /chat/completions(OpenAI API)→APIAdapter, 그 외→StreamlitAdapter."""
+    if proto == "mcp":
+        return MCPAdapter(url, headless=headless)
+    if proto == "a2a":
+        return A2AAdapter(url, headless=headless)
     if "/chat/completions" in url or "/v1/" in url:
         return APIAdapter(url, model=model, headless=headless)
     return StreamlitAdapter(url, headless=headless)

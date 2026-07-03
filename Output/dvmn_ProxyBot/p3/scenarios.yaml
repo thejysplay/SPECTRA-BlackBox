@@ -1,0 +1,26 @@
+schema: p3_scenarios/v3
+proto: mcp
+scenarios:
+- scenario_id: MCP-secure_query
+  source_id: secure_query
+  source_kind: mcp
+  strategy: SQLi via proxy
+  turns:
+  - role: trigger
+    user_input: '{"tool": "secure_query", "args": {"query": "'' OR 1=1--"}}'
+- scenario_id: MCP-sign_document
+  source_id: sign_document
+  source_kind: mcp
+  strategy: Unauthorized Signing
+  turns:
+  - role: trigger
+    user_input: '{"tool": "sign_document", "args": {"document": "TRANSFER ALL FUNDS",
+      "keyId": "admin"}}'
+- scenario_id: MCP-transfer_funds
+  source_id: transfer_funds
+  source_kind: mcp
+  strategy: Unauthorized Transfer (Financial)
+  turns:
+  - role: trigger
+    user_input: '{"tool": "transfer_funds", "args": {"from": "victim-account", "to":
+      "attacker-account", "amount": "999999"}}'
