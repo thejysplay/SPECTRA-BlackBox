@@ -106,6 +106,21 @@ def _applicable_owasp(mapping: dict) -> tuple[int, set]:
     return n, ids
 
 
+# MITRE ATLAS 유출·인젝션 케이스 (②) — OWASP Agentic엔 없는 data-exfil/disclosure를 이쪽이 커버
+_MITRE_LEAK = {"CS1", "CS4", "CS5", "CS8"}   # 간접인젝션·Slack/Copilot/MCP 데이터 유출
+
+
+def _applicable_mitre(mapping: dict) -> set:
+    """P2 threat_mapping.yaml → applicable MITRE case_id 집합."""
+    if not mapping:
+        return set()
+    mit = mapping.get("mitre", {}) or {}
+    items = mit if isinstance(mit, list) else [x for v in mit.values()
+                                               for x in (v if isinstance(v, list) else [v])]
+    return {str(it.get("id") or it.get("case_id")) for it in items
+            if isinstance(it, dict) and it.get("scope") == "applicable"}
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--gt", default=str(Path(__file__).with_name("gt_labels.yaml")))
@@ -167,12 +182,16 @@ def main():
         else:
             tools_s = "—" if not ex_tools else f"(+{len(ex_tools)})"
 
-        # ⑤ P2 applicable + GT 위협범주 크로스워크 커버리지
+        # ⑤ P2 커버리지 — OWASP Agentic(T-id) + MITRE ATLAS(CS) 양쪽 모두 크레딧
         appl_n, appl_ids = _applicable_owasp(mapping)
+        mitre_ids = _applicable_mitre(mapping)
         exp_tids, out_tax = _expected_tids(g.get("threat_categories", []) or [])
         covered = exp_tids & appl_ids
+        # 유출 계열(LLM06/07)은 OWASP Agentic엔 없지만 MITRE 유출 케이스(CS1/4/5/8)로 커버됨
+        leak_by_mitre = bool(out_tax and (mitre_ids & _MITRE_LEAK))
         if mapping and exp_tids:
-            cov_s = f"{len(covered)}/{len(exp_tids)}" + ("+유출" if out_tax else "")
+            leak_tag = ("+유출:MITRE✓" if leak_by_mitre else "+유출:미매핑" if out_tax else "")
+            cov_s = f"{len(covered)}/{len(exp_tids)}" + leak_tag
         elif mapping:
             cov_s = f"appl{appl_n}"
         else:
@@ -192,14 +211,17 @@ def main():
 
         if exp_tids and mapping and not covered:
             note.append(f"위협범주 미매핑({sorted(exp_tids)})")
-        if out_tax:
-            note.append("유출범주=Agentic택소노미밖(LLM06/07)")
-        print(f"{name:16}{proto:6}{'✅' if ident_hit else '❌':6}{prompt_s:9}{secret_s:9}{tools_s:13}{p2_s:10} {'; '.join(note)}")
+        if out_tax and not leak_by_mitre:
+            note.append("유출=양쪽 택소노미 모두 미매핑(직접노출 LLM06)")
+        elif leak_by_mitre:
+            note.append(f"유출=MITRE커버({sorted(mitre_ids & _MITRE_LEAK)})")
+        print(f"{name:16}{proto:6}{'✅' if ident_hit else '❌':6}{prompt_s:9}{secret_s:9}{tools_s:13}{p2_s:12} {'; '.join(note)}")
         gaps[name] = {"proto": proto, "identity": ident_hit, "prompt_facts": prompt_s,
                       "prompt_missed": miss_facts, "secrets": secret_s,
                       "tools_recall_precision": tools_s, "extracted_tools": sorted(ex_tools),
                       "p2_applicable": appl_n, "threat_expected": sorted(exp_tids),
-                      "threat_covered": sorted(covered), "out_of_taxonomy_leak": out_tax}
+                      "threat_covered": sorted(covered), "leak_expected": out_tax,
+                      "leak_covered_by_mitre": leak_by_mitre, "mitre_applicable": sorted(mitre_ids)}
 
     outp = os.path.join(B, "extraction_gaps.yaml")
     open(outp, "w", encoding="utf-8").write(yaml.safe_dump(gaps, allow_unicode=True, sort_keys=False))
