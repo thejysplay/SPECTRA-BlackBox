@@ -83,7 +83,13 @@ def memory_items(profile: dict) -> list:
              "memory_observed": mem}]
 
 
-def build_scenario_prompt(agent_spec: dict, item: dict, prev: dict | None = None) -> str:
+def build_scenario_prompt(agent_spec: dict, item: dict, prev: dict | None = None,
+                          evidence: dict | None = None) -> str:
+    # P3는 '도메인 맞춤 생성' 단계 — 린 코어 + evidence(원문 도메인 프로즈)를 함께 본다.
+    # (P2 위협매핑은 린 코어만 봄. 소비자별 차등: 분류=린, 생성=풍부.)
+    samples = (evidence or {}).get("identity_samples") or []
+    domain_block = ("\n[도메인 재료 — 대상 자기보고 원문 (맞춤 어휘·프레이밍 근거)]\n"
+                    + "\n".join(f"- {s}" for s in samples[:4]) + "\n") if samples else ""
     escalate = ""
     if prev:
         blocked = " / ".join((t.get("visible_text") or "")[:60] for t in prev.get("turns", [])[-2:])
@@ -108,7 +114,7 @@ def build_scenario_prompt(agent_spec: dict, item: dict, prev: dict | None = None
 
 [복원된 Agent Spec — 관측 facet]
 {json.dumps(agent_spec, ensure_ascii=False, indent=2)}
-
+{domain_block}
 [공격 템플릿 — P2 applicable]
 {json.dumps(item, ensure_ascii=False, indent=2)}
 {escalate}
@@ -129,8 +135,9 @@ def build_scenario_prompt(agent_spec: dict, item: dict, prev: dict | None = None
 """.strip()
 
 
-def generate_one(agent_spec: dict, item: dict, prev: dict | None = None) -> dict | None:
-    raw = _llm_text(build_scenario_prompt(agent_spec, item, prev))
+def generate_one(agent_spec: dict, item: dict, prev: dict | None = None,
+                 evidence: dict | None = None) -> dict | None:
+    raw = _llm_text(build_scenario_prompt(agent_spec, item, prev, evidence))
     m = re.search(r"\{.*\}", raw, re.S)
     if not m:
         return None
@@ -216,6 +223,7 @@ def main() -> None:
         print("[p3] ⚠️ GEMINI_API_KEY 없음", file=sys.stderr); sys.exit(2)
 
     agent_spec = profile.get("agent_spec", profile)
+    evidence = profile.get("evidence", {})              # 도메인 프로즈 (P3 맞춤 생성용)
     mapping = yaml.safe_load(Path(a.mapping).read_text(encoding="utf-8"))
     items = applicable_items(mapping) + leakage_items(profile) + memory_items(profile)
 
@@ -226,7 +234,7 @@ def main() -> None:
                 t = json.loads(line); prev_map[t.get("source_id")] = t
 
     print(f"[p3] applicable {len(items)}건 → 시나리오 생성" + (" (적응 강화)" if a.prev else ""))
-    scens = [s for it in items if (s := generate_one(agent_spec, it, prev_map.get(it["id"])))]
+    scens = [s for it in items if (s := generate_one(agent_spec, it, prev_map.get(it["id"]), evidence))]
     out = Path(a.out); out.mkdir(parents=True, exist_ok=True)
     (out / "scenarios.yaml").write_text(
         yaml.safe_dump({"schema": "p3_scenarios/v3", "proto": "chat", "scenarios": scens},

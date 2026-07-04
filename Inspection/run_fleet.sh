@@ -12,8 +12,10 @@ for entry in SecureBot:7001 HelperBot:7002 LegacyBot:7003 CodeBot:7004 RAGBot:70
   echo "######## $name :$port ########"
   P1=$($PY p1.py run --url "$URL" --out "$OUT" 2>&1 | grep -vE "$F")
   echo "$P1" | grep -E "memory_profile|bucket (validated|recon)|liveness|관측 도구|\[run\] (P1 완료|⚠️)" | tail -7
+  # liveness는 '차단 게이트'가 아니라 '진단 플래그' — stub이어도 공격 강행(canned 핸들러 유출·저수율 표면 시도).
+  # (공격자 관점: 방어처럼 보인다고 안 쏘면 우리 커버리지 실패. chat에서 무수확이어도 시도는 한다.)
   if echo "$P1" | grep -qE "liveness=(stub|no_response)"; then
-    echo "  → ⚠️ stub/non-LLM(LLM 미연결) 감지 — P2~P5 생략(점검 유효성 게이트)"; continue
+    echo "  → ⚠️ stub 의심(chat 표면 canned) — 그래도 공격 강행(저수율 예상, canned 핸들러 노림)"
   fi
   $PY p2.py --profile "$OUT/p1/recovered_profile.yaml" --out "$OUT/p2" 2>&1 | grep -vE "$F" | grep "scope 분포"
   $PY p3.py --profile "$OUT/p1/recovered_profile.yaml" --mapping "$OUT/p2/threat_mapping.yaml" --out "$OUT/p3" 2>&1 | grep -vE "$F" | grep "시나리오"
