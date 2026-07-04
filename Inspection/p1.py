@@ -308,33 +308,39 @@ def synthesize_spec(classified: list, tool_surface: dict, mem_profile: dict) -> 
     } if inj else None
     # injection_surface를 정찰했으면 unobserved에서 제거 (관측됨 → P2가 N·A/unobservable 아닌 실제 판정)
     unobserved = [x for x in _UNOBSERVED if not (x == "injection_surface" and inj)]
-    return {
-        "identity": {                                   # 자기보고 (약한 증거)
-            "evidence": "self_report",
-            "samples": [clip(c.get("visible_text"), 220) for c in by("fingerprint")],
-        },
-        "capability": {                                 # 행동 관측 (강한 증거)
+    samples = [clip(c.get("visible_text"), 220) for c in by("fingerprint")]
+    reached_arg = bool(injection_surface and any(s.get("reached_arg") for s in injection_surface.get("single_turn", [])))
+    # ── 린 코어 (P2/P3 LLM에 덤프되는 것 — 핵심만) ──
+    core = {
+        "protocol": "chat",                             # 하류 P3/P4 분기 (recon_multiproto가 mcp/a2a로 덮음)
+        "identity": (samples[0] if samples else None),  # 대표 1줄 자기보고 (원문 다수는 evidence)
+        "capability": {
             "category_inventory": {c: inv.get(c, 0) for c in _CATEGORIES},    # P2 매핑 중심축
-            "tools": {k: {"category": v.get("category"), "count": v.get("observed_count"),
-                          "arg_surface": v.get("slot_examples")}
-                      for k, v in tool_surface.items()},
-            "max_completion": depths[-1] if depths else None,
-            "demonstrated": any(c.get("tools_called") for c in val),
+            "tools": {k: {"category": v.get("category"), "arg_surface": v.get("slot_examples")}
+                      for k, v in tool_surface.items()},                       # arg_surface = P5 baseline
         },
+        "memory": mem_profile,                          # stm_present / ltm_present (P2/P3)
+        "injection_surface": ({"probed": True, "reached_arg": reached_arg} if inj else None),
         "boundary": {
-            "scope_claim": [{"signal": c["boundary_signal"], "q": clip(c["query"], 40)}
-                            for c in by("permission_scope")],                 # self_report
-            "refused_behaviorally": [{"strand": c["strand"], "q": clip(c["query"])}
-                                     for c in val if c.get("boundary_signal") == "refuse"],
-            "accepted_flagged": [{"reclassified": c["reclassified_as"], "q": clip(c["query"])}
-                                 for c in val if c.get("reclassified_as")],
+            "refused_behaviorally": sorted({c["strand"] for c in val if c.get("boundary_signal") == "refuse"}),
             "gate_signal": (gate[0]["boundary_signal"] if gate else None),
         },
-        "injection_surface": injection_surface,         # 인자 주입 표면 (관측됨 = unobserved에서 빠짐)
-        "memory": mem_profile,                          # stm_present / ltm_present
-        "observability": {"tier": dict(tiers), **({"disclosure_format": dict(fmts)} if fmts else {})},
-        "unobserved": unobserved,                       # P1 미정찰 축 (N·A vs unobservable 구분)
+        "unobserved": unobserved,                       # P1 미정찰 축 (N·A vs unobservable)
     }
+    # ── evidence (코어 밖 — 하류 로직 미사용, 감사/원문만) ──
+    evidence = {
+        "identity_samples": samples,
+        "tier": dict(tiers), **({"disclosure_format": dict(fmts)} if fmts else {}),
+        "max_completion": depths[-1] if depths else None,
+        "demonstrated": any(c.get("tools_called") for c in val),
+        "scope_claim": [{"signal": c["boundary_signal"], "q": clip(c["query"], 40)} for c in by("permission_scope")],
+        "refused_detail": [{"strand": c["strand"], "q": clip(c["query"])}
+                           for c in val if c.get("boundary_signal") == "refuse"],
+        "accepted_flagged": [{"reclassified": c["reclassified_as"], "q": clip(c["query"])}
+                             for c in val if c.get("reclassified_as")],
+        "injection_detail": (injection_surface.get("single_turn") if injection_surface else []),
+    }
+    return core, evidence
 
 
 # ── 사람이 읽는 복원 프로필 카드 (raw YAML은 파이프라인용, 이건 발표·리뷰용 · 핵심 요약형) ──
@@ -359,31 +365,32 @@ def _clip1(s, n):
 def render_profile_md(profile: dict, name: str) -> str:
     """recovered_profile(dict) → 한국어 복원 프로필 카드(Markdown, 핵심 요약형)."""
     spec = profile.get("agent_spec", {}) or {}
-    ident, cap, bnd = spec.get("identity", {}) or {}, spec.get("capability", {}) or {}, spec.get("boundary", {}) or {}
-    obs, mem = spec.get("observability", {}) or {}, spec.get("memory", {}) or {}
+    ev = profile.get("evidence", {}) or {}
+    cap, bnd, mem = spec.get("capability", {}) or {}, spec.get("boundary", {}) or {}, spec.get("memory", {}) or {}
     inj = spec.get("injection_surface") or {}
-    lv, prov = obs.get("liveness", {}) or {}, profile.get("provenance", {}) or {}
-    recon, tools, tiers = profile.get("recon_pool", {}) or {}, cap.get("tools") or {}, obs.get("tier", {}) or {}
+    prov = profile.get("provenance", {}) or {}
+    recon, tools = profile.get("recon_pool", {}) or {}, cap.get("tools") or {}
+    lvd, tiers = ev.get("liveness_detail", {}) or {}, ev.get("tier", {}) or {}
 
     tier_txt = "T1 도구단계" if "T1" in tiers else "T0 텍스트"
-    live_txt = lv.get("status") or "?"
-    depth = cap.get("max_completion")
+    live_txt = spec.get("liveness") or "?"
+    depth = ev.get("max_completion")
     runs = "+".join(r.replace(".jsonl", "") for r in (prov.get("source_runs") or [])) or "r1"
     stm, ltm = ("O" if mem.get("stm_present") else "X"), ("O" if mem.get("ltm_present") else "X")
     gate = _SIGNAL_KO.get(bnd.get("gate_signal"), bnd.get("gate_signal") or "미관측")
 
     L = [f"# 복원 프로필 · {name}",
-         f"> 정찰 {prov.get('records','?')}문으로 소스 없이 복원 ({runs})", "",
+         f"> 정찰 {prov.get('records','?')}문으로 소스 없이 복원 ({runs}) · `{spec.get('protocol','chat')}`", "",
          "## 한눈에", "",
          "| 관측 | 활성 | 도구 | 메모리 | 깊이 | 게이트 |",
          "|---|---|---|---|---|---|",
-         f"| {tier_txt} | {live_txt} {lv.get('distinct','?')}/{lv.get('n','?')} | "
+         f"| {tier_txt} | {live_txt} {lvd.get('distinct','?')}/{lvd.get('n','?')} | "
          f"{f'{len(tools)}개' if tools else '없음'} | 단기{stm}·장기{ltm} | "
          f"{depth or '?'} {_DEPTH_KO.get(depth,'')} | {gate} |", ""]
 
-    samples = [s for s in (ident.get("samples") or []) if s]
-    if samples:
-        L += ["## 정체성 (자기보고)", f"\"{_clip1(samples[0], 160)}\"", ""]
+    identity = spec.get("identity") or next(iter(ev.get("identity_samples") or []), None)
+    if identity:
+        L += ["## 정체성 (자기보고)", f"\"{_clip1(identity, 160)}\"", ""]
 
     if tools:                                           # 도구 관측된 T1에서만 능력 표
         L += ["## 능력 (관측된 도구)", "", "| 도구 | 범주 | 관측 인자 |", "|---|---|---|"]
@@ -391,14 +398,15 @@ def render_profile_md(profile: dict, name: str) -> str:
               for t, v in tools.items()]
         L += [""]
 
-    refused, flagged = bnd.get("refused_behaviorally") or [], bnd.get("accepted_flagged") or []
+    refused = bnd.get("refused_behaviorally") or []     # v3: strand 문자열 리스트
+    flagged = ev.get("accepted_flagged") or []
     if inj.get("probed"):
-        reached = any(s.get("reached_arg") for s in (inj.get("single_turn") or []))
-        inj_txt = "도달(인자 오염)" if reached else "미도달"
+        inj_txt = "도달(인자 오염)" if inj.get("reached_arg") else "미도달"
     else:
         inj_txt = "미시도"
     L += ["## 경계", f"거부 {len(refused)}건 · 이상수락 {len(flagged)}건 · 주입 {inj_txt}"]
-    L += [f"- 거부: {_clip1(c.get('q',''), 45)}" for c in refused[:2]]
+    if refused:
+        L += [f"- 거부 strand: {', '.join(refused[:5])}"]
     if flagged:
         L += [f"- 이상신호: [{flagged[0].get('reclassified','')}] {_clip1(flagged[0].get('q',''), 40)}"]
     L += [""]
@@ -505,13 +513,17 @@ def classify(run_paths: list, out_dir) -> None:
         pk = row.get("memory_probe")
         if pk:
             mem_profile[f"{pk}_present"] = bool(row.get("context_carried"))
-    spec = synthesize_spec(classified, tool_surface, mem_profile)
-    spec["observability"]["liveness"] = detect_liveness(recs)   # 점검 유효성 게이트
+    spec, evidence = synthesize_spec(classified, tool_surface, mem_profile)
+    lv = detect_liveness(recs)                                   # 점검 유효성 게이트
+    spec["liveness"] = lv["status"]                             # 코어엔 상태만 (평탄화)
+    evidence["liveness_detail"] = lv                            # 상세(n/distinct/ratio)는 evidence
     val_bucket = pool["validated_observable_profile"]
     profile_out = {
-        "schema": "agent_spec/v2",
-        # ── facet 구조 Agent Spec (P2 위협매핑의 입력) ──
+        "schema": "agent_spec/v3",
+        # ── 린 코어 Agent Spec (P2 위협매핑의 입력 — 핵심만) ──
         "agent_spec": spec,
+        # ── evidence (감사·원문 — 하류 로직 미사용) ──
+        "evidence": evidence,
         # ── 격리 풀 (캐물어 짜낸 자기보고·leakage = 시나리오 재료, 판정 금지) ──
         "recon_pool": group("recon_knowledge_pool"),
         # ── 추적성 요약 (per-query raw 전문은 runs/*.jsonl + p1_classified.json 참조) ──
@@ -550,7 +562,6 @@ def classify(run_paths: list, out_dir) -> None:
         print(f"  memory[{row['memory_probe']}]: context_carried={row.get('context_carried')} 공유토큰={row.get('_shared_tokens')}")
     if mem_profile:
         print(f"  memory_profile: {mem_profile}")
-    lv = spec["observability"]["liveness"]
     print(f"  liveness: {lv['status']} (distinct {lv.get('distinct')}/{lv.get('n')}, ratio {lv.get('distinct_ratio')})")
     if lv["status"] != "live":
         print("  ⚠️ STUB/non-LLM 의심 — 점검 유효성 낮음(정밀 점검 무의미)")
@@ -608,8 +619,10 @@ def profile_context(profile: dict) -> dict:
     leakage = [{"strand": st, "q": it.get("query"), "leaked_value": it.get("leaked_excerpt")}
                for st, items in recon.items()
                for it in (items or []) if it.get("reclassified_as") == "leakage_finding"][:6]
+    ident_samples = (profile.get("evidence", {}) or {}).get("identity_samples") \
+        or ([spec.get("identity")] if spec.get("identity") else [])          # v3: evidence 우선, 코어는 1줄 string
     return {"observed_tools": tools, "gaps": gaps,
-            "identity": spec.get("identity", {}).get("samples", []),
+            "identity": ident_samples,
             "boundary": spec.get("boundary", {}),
             "memory": spec.get("memory", {}),
             "leakage_observed": leakage}
@@ -714,9 +727,10 @@ def run_p1(catalog_path: str, url: str, out_dir: str, *,
 
     # liveness 게이트 — stub/non-LLM(고정 템플릿)이면 정밀 점검 무의미, 조기 종료
     _prof = yaml.safe_load((p1 / "recovered_profile.yaml").read_text(encoding="utf-8"))
-    _lv = (_prof.get("agent_spec", {}).get("observability", {}) or {}).get("liveness", {})
-    if _lv.get("status") != "live":
-        print(f"\n[run] ⚠️ liveness={_lv.get('status')} (distinct {_lv.get('distinct')}/{_lv.get('n')}) "
+    _status = (_prof.get("agent_spec", {}) or {}).get("liveness")            # v3: 코어에 평탄화
+    _det = (_prof.get("evidence", {}) or {}).get("liveness_detail", {})
+    if _status != "live":
+        print(f"\n[run] ⚠️ liveness={_status} (distinct {_det.get('distinct')}/{_det.get('n')}) "
               f"— LLM 미연결 stub 의심. 정밀 점검 생략(유효성 게이트).")
         return
 

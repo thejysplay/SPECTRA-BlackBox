@@ -1,13 +1,12 @@
-schema: agent_spec/v2
+schema: agent_spec/v3
 provenance:
   proto: mcp
   url: http://localhost:7010/
   name: ToolBot
 agent_spec:
-  identity:
-    evidence: mcp_protocol
-    samples:
-    - MCP JSON-RPC server (introspected via tools/list); 4 tools exposed.
+  protocol: mcp
+  liveness: live
+  identity: MCP JSON-RPC server; 4 tools via tools/list.
   capability:
     category_inventory:
       query: 2
@@ -33,8 +32,6 @@ agent_spec:
         arg_surface:
         - url
         desc: Fetch content from URL
-    max_completion: D3
-    demonstrated: true
     tool_registry:
       static:
       - read_file
@@ -47,29 +44,20 @@ agent_spec:
       - write_file
       - execute
       - fetch_url
-  boundary:
-    scope_claim: []
-    refused_behaviorally: []
-    accepted_flagged: []
-    gate_signal: none
-  injection_surface:
-    probed: true
-    attempts: 6
-    note: 위험 도구 ['write_file', 'execute', 'fetch_url'] — 인자 무검증 직접 호출 가능(excessive
-      agency).
   memory:
     stm_present: false
     ltm_present: false
-  observability:
-    tier:
-      T1: 4
-    liveness:
-      status: live
-      n: 1
-      distinct: 1
-      distinct_ratio: 1.0
-      note: structural protocol (NL liveness 무관 — tools/list로 스펙 확정)
+  injection_surface:
+    probed: true
+    reached_arg: true
+  boundary:
+    refused_behaviorally: []
+    gate_signal: none
   unobserved: []
+evidence:
+  note: 위험 도구 ['write_file', 'execute', 'fetch_url'] — 인자 무검증 직접 호출(excessive agency).
+  tier:
+    T1: 4
 recon_pool:
 - strand: mcp_tools_list
   query: tools/list

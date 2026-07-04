@@ -45,8 +45,7 @@ def _liveness(name):
     rp = _load(f"{B}/dvmn_{name}/p1/recovered_profile.yaml")
     if not rp:
         return "?"
-    obs = (rp.get("agent_spec", {}) or {}).get("observability", {}) or {}
-    return (obs.get("liveness") or {}).get("status", "?")
+    return (rp.get("agent_spec", {}) or {}).get("liveness", "?")   # v3: 코어에 평탄화
 
 
 def main():

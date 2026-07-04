@@ -8,7 +8,7 @@ chat이 아닌 두 프로토콜 대상이 있다:
                                  → 신뢰 id 탐색 = identity-spoofing 표면 발견.
 
 두 프로토콜을 black-box로 introspect해 p2.py가 먹는 recovered_profile.yaml
-(agent_spec/v2)을 산출한다. 소스를 읽지 않고 프로토콜이 노출하는 것만 사용.
+(agent_spec/v3 린 코어 + evidence)을 산출한다. 소스를 읽지 않고 프로토콜이 노출하는 것만 사용.
 
 사용:  recon_multiproto.py --proto mcp --url http://localhost:7010/ --name ToolBot --out OUT
        recon_multiproto.py --proto a2a --url http://localhost:7020/a2a/message --name Orchestrator --out OUT
@@ -80,30 +80,26 @@ def recon_mcp(url: str, name: str) -> dict:
         inv[_CATEGORY.get(tn, "record")] = inv.get(_CATEGORY.get(tn, "record"), 0) + 1
         dangerous.append(tn)
     static_tools = [t for t in tools if not tools[t].get("dynamic")]
-    spec = {
-        "identity": {"evidence": "mcp_protocol",
-                     "samples": [f"MCP JSON-RPC server (introspected via tools/list); {len(tools)} tools exposed."]},
+    # ── v3 린 코어 ──
+    core = {
+        "protocol": "mcp",
+        "liveness": "live",                             # structural (NL liveness 무관 — tools/list로 확정)
+        "identity": f"MCP JSON-RPC server; {len(tools)} tools via tools/list.",
         "capability": {"category_inventory": inv, "tools": tools,
-                       "max_completion": "D3", "demonstrated": True,     # 도구가 직접 호출가능 → 실증됨
-                       # MCP 고유 표면 = 1급 facet (injection_surface에 우겨넣지 않음)
                        "tool_registry": {"static": static_tools, "dynamic": dyn["dynamic_tools"],
-                                         "permissive_any_tool": dyn["permissive_any_tool"],
-                                         "dangerous": dangerous}},
-        "boundary": {"scope_claim": [], "refused_behaviorally": [],
-                     "accepted_flagged": [], "gate_signal": "none"},    # MCP는 승인게이트 없음(무인증 호출)
-        "injection_surface": {"probed": True, "attempts": 1 + len(_DYNAMIC_NAMES),
-                              "note": f"위험 도구 {dangerous} — 인자 무검증 직접 호출 가능(excessive agency)."
-                                      + (" 임의 도구명 전부 수용(MITM)." if dyn["permissive_any_tool"] else "")
-                                      + (f" 미선언 동적도구 {dyn['dynamic_tools']} 등록 수용(registry poisoning)." if dyn["dynamic_tools"] else "")},
+                                         "permissive_any_tool": dyn["permissive_any_tool"], "dangerous": dangerous}},
         "memory": {"stm_present": False, "ltm_present": False},
-        "observability": {"tier": {"T1": len(tools)},
-                          "liveness": {"status": "live", "n": 1, "distinct": 1, "distinct_ratio": 1.0,
-                                       "note": "structural protocol (NL liveness 무관 — tools/list로 스펙 확정)"}},
+        "injection_surface": {"probed": True, "reached_arg": bool(dangerous)},
+        "boundary": {"refused_behaviorally": [], "gate_signal": "none"},   # 무인증 호출
         "unobserved": [] if tools else ["tools"],
     }
+    evidence = {"note": f"위험 도구 {dangerous} — 인자 무검증 직접 호출(excessive agency)."
+                        + (" 임의 도구명 전부 수용(MITM)." if dyn["permissive_any_tool"] else "")
+                        + (f" 미선언 동적도구 {dyn['dynamic_tools']} 등록 수용(registry poisoning)." if dyn["dynamic_tools"] else ""),
+                "tier": {"T1": len(tools)}}
     recon_pool = [{"strand": "mcp_tools_list", "query": "tools/list",
                    "leaked_excerpt": ", ".join(f"{k}({','.join(v['arg_surface'])})" for k, v in tools.items())}] if tools else []
-    return spec, recon_pool
+    return core, evidence, recon_pool
 
 
 # A2A 신뢰 sender 탐색 후보 (black-box 추측 — 관례적 에이전트 id)
@@ -126,30 +122,24 @@ def recon_a2a(url: str, name: str) -> dict:
                 spoof_hit = {"sender": sid, "status": st, "note": note}
         else:
             rejected.append(sid)
-    tier = {"T1": 1} if accepted else {"T0": 1}
-    spec = {
-        "identity": {"evidence": "a2a_probe",
-                     "samples": [f"A2A agent (no agent-card). Trusted senders discovered: {accepted or '없음(전부 거부)'}."]},
+    # ── v3 린 코어 ──
+    core = {
+        "protocol": "a2a",
+        "liveness": "live",
+        "identity": f"A2A agent (no agent-card). Trusted senders: {accepted or '없음'}.",
         "capability": {"category_inventory": {"query": 0, "mutation": 0, "record": 0, "memory": 0, "unknown": 0},
-                       "tools": {}, "max_completion": "D1", "demonstrated": bool(accepted),
-                       # A2A 고유 표면 = 1급 facet (boundary/injection_surface에 우겨넣지 않음)
+                       "tools": {},
                        "trust_surface": {"trusted_senders": accepted, "rejected_senders": rejected,
-                                         "spoofable": bool(accepted), "spoof_evidence": spoof_hit}},
-        "boundary": {"scope_claim": [], "refused_behaviorally": [],
-                     "accepted_flagged": [], "gate_signal": "trust_list"},
-        "injection_surface": {"probed": True, "attempts": len(_A2A_GUESS),
-                              "note": "identity-spoofing 표면: 신뢰 id 위조로 위임/실행 유도 가능." if accepted
-                                      else "전 sender 거부(관측 범위 내 신뢰 id 미발견)."},
+                                         "spoofable": bool(accepted)}},
         "memory": {"stm_present": False, "ltm_present": False},
-        "observability": {"tier": tier,
-                          "liveness": {"status": "live", "n": len(_A2A_GUESS),
-                                       "distinct": 2 if accepted and rejected else 1,
-                                       "distinct_ratio": 1.0}},
+        "injection_surface": {"probed": True, "reached_arg": bool(accepted)},
+        "boundary": {"refused_behaviorally": ["a2a_trust"] if rejected else [], "gate_signal": "trust_list"},
         "unobserved": ["tools", "system_prompt"],   # A2A는 스킬/프롬프트 introspection 불가
     }
+    evidence = {"spoof_evidence": spoof_hit, "tier": {"T1": 1} if accepted else {"T0": 1}}
     recon_pool = [{"strand": "a2a_trust_probe", "query": "trusted-sender enumeration",
                    "leaked_excerpt": f"accepted={accepted}"}] if accepted else []
-    return spec, recon_pool
+    return core, evidence, recon_pool
 
 
 def main() -> None:
@@ -160,18 +150,18 @@ def main() -> None:
     ap.add_argument("--out", required=True)
     a = ap.parse_args()
 
-    spec, recon_pool = recon_mcp(a.url, a.name) if a.proto == "mcp" else recon_a2a(a.url, a.name)
-    # recon_pool은 chat 프로필과 동일하게 top-level (p3.leakage_items가 top-level을 읽음)
-    profile = {"schema": "agent_spec/v2", "provenance": {"proto": a.proto, "url": a.url, "name": a.name},
-               "agent_spec": spec, "recon_pool": recon_pool}
+    core, evidence, recon_pool = recon_mcp(a.url, a.name) if a.proto == "mcp" else recon_a2a(a.url, a.name)
+    # v3: 린 코어(agent_spec) + evidence + recon_pool top-level (chat 프로필과 동일 구조)
+    profile = {"schema": "agent_spec/v3", "provenance": {"proto": a.proto, "url": a.url, "name": a.name},
+               "agent_spec": core, "evidence": evidence, "recon_pool": recon_pool}
     outp = Path(a.out) / "p1"
     outp.mkdir(parents=True, exist_ok=True)
     (outp / "recovered_profile.yaml").write_text(
         yaml.safe_dump(profile, allow_unicode=True, sort_keys=False), encoding="utf-8")
 
-    tools = list(spec["capability"]["tools"].keys())
+    tools = list(core["capability"]["tools"].keys())
     print(f"[{a.proto}] {a.name}: tools={tools or '—'} "
-          f"inv={ {k: v for k, v in spec['capability']['category_inventory'].items() if v} } "
+          f"inv={ {k: v for k, v in core['capability']['category_inventory'].items() if v} } "
           f"→ {outp}/recovered_profile.yaml")
 
 
