@@ -1,13 +1,12 @@
-schema: agent_spec/v2
+schema: agent_spec/v3
 provenance:
   proto: mcp
   url: http://localhost:7011/
   name: DataBot
 agent_spec:
-  identity:
-    evidence: mcp_protocol
-    samples:
-    - MCP JSON-RPC server (introspected via tools/list); 3 tools exposed.
+  protocol: mcp
+  liveness: live
+  identity: MCP JSON-RPC server; 3 tools via tools/list.
   capability:
     category_inventory:
       query: 3
@@ -27,8 +26,6 @@ agent_spec:
       list_tables:
         arg_surface: []
         desc: List database tables
-    max_completion: D3
-    demonstrated: true
     tool_registry:
       static:
       - query_database
@@ -37,28 +34,20 @@ agent_spec:
       dynamic: []
       permissive_any_tool: false
       dangerous: []
-  boundary:
-    scope_claim: []
-    refused_behaviorally: []
-    accepted_flagged: []
-    gate_signal: none
-  injection_surface:
-    probed: true
-    attempts: 6
-    note: 위험 도구 [] — 인자 무검증 직접 호출 가능(excessive agency).
   memory:
     stm_present: false
     ltm_present: false
-  observability:
-    tier:
-      T1: 3
-    liveness:
-      status: live
-      n: 1
-      distinct: 1
-      distinct_ratio: 1.0
-      note: structural protocol (NL liveness 무관 — tools/list로 스펙 확정)
+  injection_surface:
+    probed: true
+    reached_arg: false
+  boundary:
+    refused_behaviorally: []
+    gate_signal: none
   unobserved: []
+evidence:
+  note: 위험 도구 [] — 인자 무검증 직접 호출(excessive agency).
+  tier:
+    T1: 3
 recon_pool:
 - strand: mcp_tools_list
   query: tools/list

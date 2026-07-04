@@ -1,14 +1,13 @@
-schema: agent_spec/v2
+schema: agent_spec/v3
 provenance:
   proto: a2a
   url: http://localhost:7020/a2a/message
   name: Orchestrator
 agent_spec:
-  identity:
-    evidence: a2a_probe
-    samples:
-    - 'A2A agent (no agent-card). Trusted senders discovered: [''worker-1'', ''worker-2'',
-      ''admin-agent''].'
+  protocol: a2a
+  liveness: live
+  identity: 'A2A agent (no agent-card). Trusted senders: [''worker-1'', ''worker-2'',
+    ''admin-agent''].'
   capability:
     category_inventory:
       query: 0
@@ -17,8 +16,6 @@ agent_spec:
       memory: 0
       unknown: 0
     tools: {}
-    max_completion: D1
-    demonstrated: true
     trust_surface:
       trusted_senders:
       - worker-1
@@ -31,30 +28,23 @@ agent_spec:
       - worker
       - system
       spoofable: true
-      spoof_evidence: null
-  boundary:
-    scope_claim: []
-    refused_behaviorally: []
-    accepted_flagged: []
-    gate_signal: trust_list
-  injection_surface:
-    probed: true
-    attempts: 8
-    note: 'identity-spoofing 표면: 신뢰 id 위조로 위임/실행 유도 가능.'
   memory:
     stm_present: false
     ltm_present: false
-  observability:
-    tier:
-      T1: 1
-    liveness:
-      status: live
-      n: 8
-      distinct: 2
-      distinct_ratio: 1.0
+  injection_surface:
+    probed: true
+    reached_arg: true
+  boundary:
+    refused_behaviorally:
+    - a2a_trust
+    gate_signal: trust_list
   unobserved:
   - tools
   - system_prompt
+evidence:
+  spoof_evidence: null
+  tier:
+    T1: 1
 recon_pool:
 - strand: a2a_trust_probe
   query: trusted-sender enumeration
