@@ -182,7 +182,11 @@ def boundary_signal(visible_text: str) -> str:
 
 
 _CTX_NOISE = {"Answer", "Final", "action", "action_input", "Complete", "smart_toy",
-              "keyboard_arrow_down", "json", "null", "true", "false", "http", "https"}
+              "keyboard_arrow_down", "json", "null", "true", "false", "http", "https",
+              # [P1-d] canned/stub 응답 상투어 — 동일 canned 반복을 '맥락 이어짐'으로 오판하던 원인 제거
+              "here", "help", "Help", "know", "need", "what", "What", "Sure", "Understood",
+              "Hello", "assist", "happy", "would", "like", "your", "you", "Bot", "Assistant",
+              "Let", "please", "Please", "instructions", "here to help"}
 
 
 def _signal_tokens(text: str) -> set:
@@ -310,6 +314,14 @@ def synthesize_spec(classified: list, tool_surface: dict, mem_profile: dict) -> 
     unobserved = [x for x in _UNOBSERVED if not (x == "injection_surface" and inj)]
     samples = [clip(c.get("visible_text"), 220) for c in by("fingerprint")]
     reached_arg = bool(injection_surface and any(s.get("reached_arg") for s in injection_surface.get("single_turn", [])))
+    # [P1-c] 강한 제약 = P3 override 표적. 제약을 서술하는 거부 응답을 발췌해 P3가 정조준하게 함.
+    _CONSTRAINT = re.compile(r"only|만\s|한해|restrict|제한|not allowed|거부|refuse|cannot .*other|"
+                             r"policy|정책|보안|엄격|strict", re.I)
+    override_targets = [clip(c.get("visible_text"), 150) for c in val
+                        if c.get("boundary_signal") == "refuse" and _CONSTRAINT.search(c.get("visible_text") or "")][:3]
+    # [P1-b] context_probe(장문 채움+설정요구)가 순응/미거부면 오버플로 취약 → P3-a 우선
+    ctx_susceptible = any(c.get("mode") == "context_probe" and c.get("boundary_signal") != "refuse"
+                          for c in classified)
     # ── 린 코어 (P2/P3 LLM에 덤프되는 것 — 핵심만) ──
     core = {
         "protocol": "chat",                             # 하류 P3/P4 분기 (recon_multiproto가 mcp/a2a로 덮음)
@@ -320,10 +332,12 @@ def synthesize_spec(classified: list, tool_surface: dict, mem_profile: dict) -> 
                       for k, v in tool_surface.items()},                       # arg_surface = P5 baseline
         },
         "memory": mem_profile,                          # stm_present / ltm_present (P2/P3)
-        "injection_surface": ({"probed": True, "reached_arg": reached_arg} if inj else None),
+        "injection_surface": ({"probed": True, "reached_arg": reached_arg,
+                               "context_overflow_susceptible": ctx_susceptible} if inj else None),
         "boundary": {
             "refused_behaviorally": sorted({c["strand"] for c in val if c.get("boundary_signal") == "refuse"}),
             "gate_signal": (gate[0]["boundary_signal"] if gate else None),
+            "override_targets": override_targets,          # [P1-c] P3-b가 무력화할 강한 제약 문구
         },
         "unobserved": unobserved,                       # P1 미정찰 축 (N·A vs unobservable)
     }
