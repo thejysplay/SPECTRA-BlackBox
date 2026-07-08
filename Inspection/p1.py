@@ -124,7 +124,7 @@ def collect(items: list[dict], url: str, out_path: Path, *, fresh: bool,
 # 2. 분류 — RawObservation jsonl → recovered_profile (순수 관측 사실만, 해석은 P2)
 # ════════════════════════════════════════════════════════════════
 # 도구를 위협-관련 '효과류(effect-class)'로 분류 — CRUD가 아니라 낼 수 있는 피해 종류로.
-# (read/write/execute/communicate/transact/memory) — coverage_matrix의 capability 축 근거.
+# (read/write/execute/communicate/transact/memory) — 위협 관련 효과 종류.
 _CAT_RULES = [
     (re.compile(r"(remember|memoriz|recall|\bstore\b)", re.I), "memory"),
     (re.compile(r"^(execute|run|exec|eval|compile)|shell|command", re.I), "execute"),
