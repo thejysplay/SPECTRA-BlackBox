@@ -1,0 +1,78 @@
+# SPECTRA-BlackBox — 커버리지 매트릭스 (관측 축 ↔ 위협 택소노미)
+#
+# 목적: P1이 관측하는 "축(axis)"이 저희 직관이 아니라 저명한 택소노미에서
+#       도출됐음을 증명한다. 각 축은 OWASP Agentic Threats(T1-T15, 59 sub,
+#       THREAT_Specification v3.1) + MITRE ATLAS 판정에 근거를 제공한다.
+#
+# 방법론 보증:
+#   - 건전성(soundness): 모든 축이 >=1개 sub를 먹인다 → 죽은 축 없음.
+#   - 완전성(completeness): 59 sub 전부가 >=1개 축에 매핑된다 → 사각지대 없음.
+#   - 축↔위협은 다대다: 한 위협(예: T9)은 여러 축에 걸치고, 한 축(예: interface의
+#     protocol==a2a)은 여러 위협을 먹인다. 그래서 관측은 '축'으로 조직하고
+#     택소노미는 각 프로브의 serves 태그로 결합한다. (위협을 id로 만들지 않는 이유.)
+schema: coverage_matrix/v1
+taxonomy_ref: "OWASP Agentic T1-T15 (THREAT_Specification v3.1, 59 sub)"
+
+axes:
+
+  interface:
+    observes: "진입 양식(chat/api/mcp/a2a) + 비신뢰 콘텐츠 섭취(IPI/도구응답/피어메시지)"
+    serves: [T6-S2, T6-S3, T9-S2, T9-S3, T11-S3, T12-S1, T12-S2, T12-S3,
+             T12-S5, T13-S1, T13-S2, T14-S1, T14-S2, T14-S4, T15-S1]
+
+  identity:
+    observes: "선언 역할·자기서술·목표 앵커"
+    serves: [T7-S1, T7-S2, T7-S3, T9-S1, T9-S5, T12-S2, T15-S2]
+
+  capability:
+    observes: "도구 인벤토리 + 효과류(read/write/execute/communicate) + 인자 통제도"
+    serves: [T2-S1, T2-S2, T2-S3, T2-S4, T2-S5, T2-S6, T3-S2, T7-S5,
+             T9-S1, T9-S4, T10-S1, T11-S1, T11-S2, T11-S3, T15-S1]
+
+  state:
+    observes: "메모리 지속성(STM/LTM)·쓰기 가능성(memory_write/벡터스토어)"
+    serves: [T1-S1, T1-S2, T1-S3, T1-S4, T2-S4, T2-S5, T3-S3, T4-S4,
+             T5-S1, T5-S3, T6-S5, T12-S3]
+
+  authority:
+    observes: "권한 범위(acts_on)·경계 강제 수준·교차 식별자/카테고리 접근"
+    serves: [T2-S6, T3-S1, T3-S2, T3-S3, T7-S5, T9-S5, T14-S1, T14-S2, T14-S4]
+
+  autonomy:
+    observes: "자율 연쇄(self-chaining)·max_steps·HITL 승인 게이트"
+    serves: [T2-S3, T4-S1, T4-S2, T4-S3, T4-S4, T5-S1, T5-S2, T5-S4,
+             T6-S1, T6-S4, T10-S1, T10-S2, T10-S3, T13-S2, T14-S2]
+
+  guardrails:
+    observes: "관측된 거부·선언 제약·정책 준수 외양(cross-cut 방어 봉투)"
+    serves: [T6-S1, T7-S1, T7-S3, T7-S4, T10-S3, T15-S2]
+
+# 단일 블랙박스 엔드포인트로 구조적 관측 불가 → P2 scope = unobservable/proxy.
+# (서버측 감사 인프라·전송 계층·함대 규모 인프라 접근이 필요한 sub들.)
+# 이 클러스터의 존재가 4상태 scope와 observability 원장의 방법론적 정당성이다.
+unobservable_cluster:
+  serves: [T8-S1, T8-S2, T8-S3, T12-S4, T13-S3, T14-S3]
+
+# 역전 뷰: 위협 → 그 위협을 시험하는 프로브(들). probe_catalog.yaml의 serves 태그에서 자동 도출.
+# '위협당 프로브 하나'가 아니라 다대다 — 한 위협이 여러 프로브로, 한 프로브가 여러 위협으로.
+# 이것이 T별 추적성(각 T를 무엇으로 시험했나)을 준다. 카탈로그는 축으로 조직, 이 뷰는 T로 조회.
+by_threat:
+  T1:  [memory_stm, memory_ltm]
+  T2:  [argument_injection, capability_selfreport, capability_demonstrate, capability_breadth, slot_ablation, tool_schema]
+  T3:  [permission_scope]
+  T4:  [self_chaining, completion_test]
+  T5:  [memory_stm, memory_ltm, self_chaining, completion_test, negative_control]
+  T6:  [argument_injection, indirect_injection, overflow_leak, policy_constraint, prompt_leak]
+  T7:  [fingerprint, sandbagging_check, policy_constraint, refusal_baseline, negative_control, prompt_leak, fewshot_leak]
+  T8:  [audit_trail]   # proxy — 자기보고 감사이력 vs 실제 호출 대조 (관측 가능한 프록시)
+  T9:  [fingerprint, permission_scope]
+  T10: [gate_probe, completion_test]
+  T11: [capability_selfreport, capability_demonstrate, capability_breadth, tool_schema]
+  T12: [indirect_injection]
+  T13: []       # 관측 불가 — 다중에이전트 위상 (단일 엔드포인트 밖)
+  T14: [permission_scope]
+  T15: [indirect_injection, fingerprint]
+
+# 축별 sub 수 (죽은 축 없음 검증):
+#   interface 15 · capability 15 · autonomy 15 · state 12 · authority 9
+#   · identity 7 · guardrails 6 · (unobservable 6)
