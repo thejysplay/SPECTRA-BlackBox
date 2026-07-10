@@ -60,20 +60,45 @@ def _scope_rules() -> str:
 6. unobserved_axes 축을 요구하면 unobservable(N_A 아님). 환각 금지(명세에 없는 능력 지어내지 마라)."""
 
 
-def _llm_json(prompt: str) -> list:
+def _llm_json(prompt: str, retries: int = 2) -> list:
+    """gemini JSON 응답 파싱. gemini가 종종 콤마 누락·이스케이프 깨진 JSON을 내므로
+    (1) 재시도(온도 변주) → (2) 배열 파싱 → (3) 개별 {...} 객체 복구 순으로 강건화.
+    끝내 실패하면 이 위협만 [] 스킵(전체 P2 크래시 방지)."""
     import litellm
-    resp = litellm.completion(model=GEN_MODEL, temperature=0,
-                              messages=[{"role": "user", "content": prompt}])
-    raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
-    i = raw.find("[")
-    if i < 0:
-        return []
-    try:
-        items, _ = json.JSONDecoder().raw_decode(raw[i:])   # 배열만 파싱, 뒤 잡텍스트 무시
-    except json.JSONDecodeError:
-        m = re.search(r"\[.*\]", raw, re.S)                 # 폴백: 첫[~마지막]
-        items = json.loads(m.group(0)) if m else []
-    return items if isinstance(items, list) else []
+    last_err = None
+    for attempt in range(retries + 1):
+        resp = litellm.completion(model=GEN_MODEL,
+                                  temperature=0 if attempt == 0 else 0.4,   # 재시도 시 출력 변주
+                                  messages=[{"role": "user", "content": prompt}])
+        raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
+        i = raw.find("[")
+        if i < 0:
+            continue
+        frag = raw[i:]
+        try:                                                # 1차: 배열만 파싱(뒤 잡텍스트 무시)
+            items, _ = json.JSONDecoder().raw_decode(frag)
+            if isinstance(items, list) and items:
+                return items
+        except json.JSONDecodeError as e:
+            last_err = e
+        m = re.search(r"\[.*\]", raw, re.S)                 # 2차: 첫[~마지막]
+        if m:
+            try:
+                items = json.loads(m.group(0))
+                if isinstance(items, list) and items:
+                    return items
+            except json.JSONDecodeError as e:
+                last_err = e
+        objs = []                                           # 3차: 개별 {...} 객체만 살려 복구(배열 join 오류에 강건)
+        for om in re.finditer(r"\{[^{}]*\}", frag, re.S):
+            try:
+                objs.append(json.loads(om.group(0)))
+            except json.JSONDecodeError:
+                continue
+        if objs:
+            return objs
+    print(f"[p2] ⚠️ LLM JSON 파싱 실패(재시도 {retries}회) — 이 위협 스킵: {last_err}", file=sys.stderr)
+    return []
 
 
 def build_prompt_owasp(spec: dict, threat: dict) -> str:

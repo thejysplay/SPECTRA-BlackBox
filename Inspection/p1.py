@@ -624,17 +624,40 @@ def generate_r2(profile: dict, catalog: dict, out_path) -> int:
         return 0
     import litellm
     ctx = profile_context(profile)
-    resp = litellm.completion(model=GEN_MODEL, temperature=0,
-                              messages=[{"role": "user", "content": build_prompt(ctx)}])
-    raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
+    prompt = build_prompt(ctx)
     items = []
-    i = raw.find("[")
-    if i >= 0:
-        try:
-            items, _ = json.JSONDecoder().raw_decode(raw[i:])   # 배열만 파싱, 뒤 잡텍스트 무시
+    for attempt in range(3):                                    # gemini JSON 깨짐 대비: 재시도(온도 변주)+개별객체 복구
+        resp = litellm.completion(model=GEN_MODEL,
+                                  temperature=0 if attempt == 0 else 0.4,
+                                  messages=[{"role": "user", "content": prompt}])
+        raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
+        i = raw.find("[")
+        if i < 0:
+            continue
+        frag = raw[i:]
+        try:                                                    # 1차: 배열만 파싱
+            items, _ = json.JSONDecoder().raw_decode(frag)
+            if isinstance(items, list) and items:
+                break
         except json.JSONDecodeError:
-            m = re.search(r"\[.*\]", raw, re.S)                 # 폴백: 첫[~마지막]
-            items = json.loads(m.group(0)) if m else []
+            items = []
+        m = re.search(r"\[.*\]", raw, re.S)                     # 2차: 첫[~마지막]
+        if m:
+            try:
+                items = json.loads(m.group(0))
+                if isinstance(items, list) and items:
+                    break
+            except json.JSONDecodeError:
+                items = []
+        objs = []                                               # 3차: 개별 {...} 객체 복구
+        for om in re.finditer(r"\{[^{}]*\}", frag, re.S):
+            try:
+                objs.append(json.loads(om.group(0)))
+            except json.JSONDecodeError:
+                continue
+        if objs:
+            items = objs
+            break
     if not isinstance(items, list):
         items = []
     doc: dict = {"version": "probe_r2/generated"}

@@ -52,11 +52,16 @@ def main() -> None:
     ap.add_argument("--url", default=DEFAULT_URL)
     ap.add_argument("--out", required=True)
     ap.add_argument("--headed", action="store_true")
+    ap.add_argument("--proto", default=None,
+                    help="전송 어댑터 오버라이드(goover/streamlit/api/mcp/a2a). "
+                         "미지정 시 scenarios.yaml의 proto 사용")
     a = ap.parse_args()
 
     doc = yaml.safe_load(Path(a.scenarios).read_text(encoding="utf-8"))
     scens = doc.get("scenarios", [])
-    proto = doc.get("proto", "auto")          # P3가 기록한 프로토콜 (chat/mcp/a2a)
+    # 전송(transport)은 실행 시점의 런타임 관심사 — CLI --proto가 있으면 그것이 우선.
+    # (P3는 profile.modality를 proto로 기록하므로 chat이 되는데, goover는 브라우저 어댑터가 필요)
+    proto = a.proto or doc.get("proto", "auto")
     print(f"[p4] {len(scens)}시나리오 실행 @ {a.url} (proto={proto})")
     traces = execute(scens, a.url, not a.headed, proto=proto)
 
