@@ -64,12 +64,17 @@ def _llm_json(prompt: str, retries: int = 2) -> list:
     """gemini JSON 응답 파싱. gemini가 종종 콤마 누락·이스케이프 깨진 JSON을 내므로
     (1) 재시도(온도 변주) → (2) 배열 파싱 → (3) 개별 {...} 객체 복구 순으로 강건화.
     끝내 실패하면 이 위협만 [] 스킵(전체 P2 크래시 방지)."""
-    import litellm
+    import litellm, time
     last_err = None
     for attempt in range(retries + 1):
-        resp = litellm.completion(model=GEN_MODEL,
-                                  temperature=0 if attempt == 0 else 0.4,   # 재시도 시 출력 변주
-                                  messages=[{"role": "user", "content": prompt}])
+        try:
+            resp = litellm.completion(model=GEN_MODEL,
+                                      temperature=0 if attempt == 0 else 0.4,   # 재시도 시 출력 변주
+                                      messages=[{"role": "user", "content": prompt}])
+        except Exception as e:                                  # 503/연결/레이트 — 백오프 후 재시도
+            last_err = e
+            time.sleep(3 * (attempt + 1))
+            continue
         raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
         i = raw.find("[")
         if i < 0:

@@ -35,11 +35,21 @@ def _load_gemini_key() -> None:
         pass
 
 
-def _llm_text(prompt: str) -> str:
-    import litellm
-    resp = litellm.completion(model=GEN_MODEL, temperature=0.6,
-                              messages=[{"role": "user", "content": prompt}])
-    return resp.choices[0].message.content or ""
+def _llm_text(prompt: str, retries: int = 3) -> str:
+    """gemini 호출. 연결/레이트 등 일시 오류에 재시도(백오프). 끝내 실패하면 ""
+    반환 → generate_one이 None으로 걸러 해당 시나리오만 스킵(전체 P3 크래시 방지)."""
+    import litellm, time
+    last = None
+    for attempt in range(retries):
+        try:
+            resp = litellm.completion(model=GEN_MODEL, temperature=0.6,
+                                      messages=[{"role": "user", "content": prompt}])
+            return resp.choices[0].message.content or ""
+        except Exception as e:
+            last = e
+            time.sleep(2 * (attempt + 1))
+    print(f"[p3] ⚠️ LLM 호출 실패(재시도 {retries}회) — 시나리오 스킵: {type(last).__name__}", file=sys.stderr)
+    return ""
 
 
 def applicable_items(mapping: dict, sub_idx: dict, case_idx: dict) -> list:

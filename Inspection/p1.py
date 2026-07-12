@@ -622,14 +622,19 @@ def generate_r2(profile: dict, catalog: dict, out_path) -> int:
     if not os.environ.get("GEMINI_API_KEY"):
         print("[generate] ⚠️ GEMINI_API_KEY 없음 (DVLA .env 확인)", file=sys.stderr)
         return 0
-    import litellm
+    import litellm, time
     ctx = profile_context(profile)
     prompt = build_prompt(ctx)
     items = []
-    for attempt in range(3):                                    # gemini JSON 깨짐 대비: 재시도(온도 변주)+개별객체 복구
-        resp = litellm.completion(model=GEN_MODEL,
-                                  temperature=0 if attempt == 0 else 0.4,
-                                  messages=[{"role": "user", "content": prompt}])
+    for attempt in range(3):                                    # gemini 오류(503/연결/JSON깨짐) 대비: 재시도(온도 변주)+개별객체 복구
+        try:
+            resp = litellm.completion(model=GEN_MODEL,
+                                      temperature=0 if attempt == 0 else 0.4,
+                                      messages=[{"role": "user", "content": prompt}])
+        except Exception as e:                                  # 503/연결/레이트 — 백오프 후 재시도
+            print(f"[generate] ⚠️ LLM 호출 오류 재시도 {attempt+1}/3: {type(e).__name__}", file=sys.stderr)
+            time.sleep(3 * (attempt + 1))
+            continue
         raw = (resp.choices[0].message.content or "").replace("```json", "").replace("```", "")
         i = raw.find("[")
         if i < 0:
