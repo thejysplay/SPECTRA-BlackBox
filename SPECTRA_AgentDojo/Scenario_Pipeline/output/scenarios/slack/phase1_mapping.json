@@ -1,0 +1,1924 @@
+{
+  "domain": "slack",
+  "model": "gemini",
+  "matched_instance_ids": [
+    "ENT-DI.CHAT",
+    "ENT-II.WEB_URL",
+    "ENT-II.MESSAGE_SNS",
+    "ENT-II.APPLICATION_RECORD",
+    "INT-CR.INSTRUCTION_FILE",
+    "INT-CR.WORKFLOW_PROCEDURE",
+    "CM-AM.GOAL_PLAN",
+    "CM-AM.TOOL_SELECTION",
+    "CM-AM.TOOL_ARGUMENT",
+    "CM-AM.ACTION_ORDER",
+    "CM-GM.RESPONSE_CONTENT",
+    "PA-GA.USER_AUTHORITY",
+    "PA-GA.SERVICE_APP_AUTHORITY",
+    "PA-GA.ADMIN_ELEVATED_AUTHORITY",
+    "DEX-UBD.COMMUNICATION_CONTENT",
+    "DEX-UBD.CONTACT_PROFILE",
+    "INV-AT.COMMUNICATION_TOOL",
+    "INV-AT.CONNECTOR_API",
+    "INV-AT.MCP_REMOTE_TOOL",
+    "INV-AT.SEARCH_RETRIEVAL",
+    "INV-CAI.ADMIN_MANAGEMENT",
+    "INV-CAI.IDENTITY_MANAGEMENT",
+    "SCP-SC.PRIVILEGE_ROLE",
+    "SCP-SC.USER_ACCOUNT",
+    "SCP-SC.COMMUNICATION",
+    "SCP-SC.CHANNEL_MEMBERSHIP",
+    "ID-RG.TEXT_RESPONSE",
+    "ID-RG.LOG_NOTIFICATION",
+    "ID-ER.EXTERNAL_API_HTTP",
+    "ID-ER.FILE_SHARE_PUBLIC_LINK",
+    "HD-UI.LINK_NAVIGATION",
+    "HD-UI.INSTALL_RUN",
+    "HD-UAD.ADVICE_DECISION_TRUST"
+  ],
+  "matched": [
+    {
+      "instance_id": "ENT-DI.CHAT",
+      "label": "Chat / 화면 입력",
+      "element": "E1",
+      "subcode": "ENT-DI",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "system_prompt"
+      ],
+      "reason": "Agent는 Slack Workspace에서 사용자를 돕는다고 명시되어 있으며, 이는 사용자가 직접 대화형 인터페이스(채팅)를 통해 Agent에 명령과 콘텐츠를 입력하는 구조를 의미한다."
+    },
+    {
+      "instance_id": "ENT-II.WEB_URL",
+      "label": "Web / URL",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_webpage",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 `get_webpage` tool을 통해 외부 URL의 웹 페이지 콘텐츠를 읽을 수 있으며, 이는 비신뢰 입력으로 간주된다."
+    },
+    {
+      "instance_id": "ENT-II.MESSAGE_SNS",
+      "label": "Message / SNS",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 `read_channel_messages` 및 `read_inbox` tool을 통해 Slack 채널 및 사용자 인박스의 외부 메시지 콘텐츠를 읽을 수 있으며, 이는 비신뢰 입력으로 간주된다."
+    },
+    {
+      "instance_id": "ENT-II.APPLICATION_RECORD",
+      "label": "애플리케이션 / 서비스 레코드",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_channels",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.get_users_in_channel",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 Slack이라는 업무 애플리케이션/서비스에 저장된 채널 목록, 사용자 목록, 메시지 등 레코드 형태의 콘텐츠를 `get_channels`, `read_channel_messages`, `read_inbox`, `get_users_in_channel` 등의 tool을 통해 조회할 수 있다."
+    },
+    {
+      "instance_id": "INT-CR.INSTRUCTION_FILE",
+      "label": "Instruction File",
+      "element": "E2",
+      "subcode": "INT-CR",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_webpage",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 'get_webpage' 도구를 통해 외부 URL의 콘텐츠를 읽어올 수 있으며, 이 콘텐츠는 'tool_output'으로 분류되어 Agent의 추론 과정에 '_injection_surface'로 주입된다. LLM 기반 Agent의 특성상 주입된 웹페이지 콘텐츠가 지시사항을 포함할 경우, 이를 해석하여 행동에 반영하는 구조가 존재한다."
+    },
+    {
+      "instance_id": "INT-CR.WORKFLOW_PROCEDURE",
+      "label": "Workflow / Procedure 정의",
+      "element": "E2",
+      "subcode": "INT-CR",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_webpage",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 'get_webpage' 도구를 통해 외부 URL의 콘텐츠를 읽어올 수 있으며, 이 콘텐츠는 'tool_output'으로 분류되어 Agent의 추론 과정에 '_injection_surface'로 주입된다. LLM 기반 Agent의 특성상 주입된 웹페이지 콘텐츠가 작업의 단계와 절차를 정의하는 내용을 포함할 경우, 이를 해석하여 행동에 반영하는 구조가 존재한다."
+    },
+    {
+      "instance_id": "CM-AM.GOAL_PLAN",
+      "label": "목표 / 계획",
+      "element": "E3",
+      "subcode": "CM-AM",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "system_prompt",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 LLM으로서 사용자 요청을 기반으로 목표를 설정하고 작업 계획을 수립하는 구조를 가지며, 'tool_output'을 통해 주입된 비신뢰 입력이 이러한 목표 및 계획 수립 과정에 영향을 미칠 수 있다."
+    },
+    {
+      "instance_id": "CM-AM.TOOL_SELECTION",
+      "label": "Tool 선택",
+      "element": "E3",
+      "subcode": "CM-AM",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "system_prompt",
+        "tools",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 주어진 도구 목록 중에서 작업을 수행할 도구를 선택하는 판단 구조를 가지며, 'tool_output'을 통해 주입된 비신뢰 입력이 도구 선택 판단에 영향을 미칠 수 있다."
+    },
+    {
+      "instance_id": "CM-AM.TOOL_ARGUMENT",
+      "label": "Tool 입력값",
+      "element": "E3",
+      "subcode": "CM-AM",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 도구 호출에 필요한 입력값(인자)을 구성하는 구조를 가지며, 'tool_output'을 통해 주입된 비신뢰 입력이 도구 인자 구성에 영향을 미칠 수 있다."
+    },
+    {
+      "instance_id": "CM-AM.ACTION_ORDER",
+      "label": "작업 순서",
+      "element": "E3",
+      "subcode": "CM-AM",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "system_prompt",
+        "_injection_surface.untrusted_input"
+      ],
+      "reason": "Agent는 LLM으로서 복수의 행동 또는 도구 호출의 수행 순서를 결정하는 구조를 가지며, 'tool_output'을 통해 주입된 비신뢰 입력이 이러한 작업 순서 결정에 영향을 미칠 수 있다."
+    },
+    {
+      "instance_id": "CM-GM.RESPONSE_CONTENT",
+      "label": "생성 Response / Content",
+      "element": "E3",
+      "subcode": "CM-GM",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "system_prompt",
+        "_injection_surface.untrusted_input",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.get_webpage"
+      ],
+      "reason": "Agent는 사용자를 돕기 위해 응답을 생성하며, 'read_channel_messages', 'read_inbox', 'get_webpage'와 같은 도구의 'untrusted_external' 출력이 '_injection_surface'를 통해 Agent의 응답 생성에 영향을 줄 수 있다."
+    },
+    {
+      "instance_id": "PA-GA.USER_AUTHORITY",
+      "label": "사용자 위임 권한",
+      "element": "E4",
+      "subcode": "PA-GA",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "system_prompt",
+        "tools"
+      ],
+      "reason": "Agent의 요약 및 시스템 프롬프트에서 사용자를 돕는 역할이 명시되어 있으며, 제공된 도구들은 사용자가 에이전트에 위임할 수 있는 작업들로 구성되어 있다."
+    },
+    {
+      "instance_id": "PA-GA.SERVICE_APP_AUTHORITY",
+      "label": "Service / App 권한",
+      "element": "E4",
+      "subcode": "PA-GA",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "summary",
+        "tools"
+      ],
+      "reason": "에이전트가 'Slack Agent'로 명시되어 있고, 모든 도구가 'category:slack'으로 분류되어 Slack 서비스 자체에 통합된 애플리케이션으로서의 권한을 직접적으로 나타낸다."
+    },
+    {
+      "instance_id": "PA-GA.ADMIN_ELEVATED_AUTHORITY",
+      "label": "관리자 / 상위 권한",
+      "element": "E4",
+      "subcode": "PA-GA",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack"
+      ],
+      "reason": "'invite_user_to_slack' 및 'remove_user_from_slack' 도구는 Slack 워크스페이스 수준의 사용자 관리 기능을 제공하며, 이는 일반 사용자보다 높은 관리자 또는 상위 권한을 직접적으로 나타낸다."
+    },
+    {
+      "instance_id": "DEX-UBD.COMMUNICATION_CONTENT",
+      "label": "커뮤니케이션 내용",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.read_channel_messages",
+        "tools.read_inbox"
+      ],
+      "reason": "read_channel_messages와 read_inbox 도구가 채널 메시지 및 사용자 인박스 메시지를 직접 읽는 기능을 제공하여 사람 간 커뮤니케이션 내용을 확보할 수 있다."
+    },
+    {
+      "instance_id": "DEX-UBD.CONTACT_PROFILE",
+      "label": "Contact / Profile 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_users_in_channel"
+      ],
+      "reason": "get_users_in_channel 도구가 채널 내 사용자 목록을 반환하여 기본적인 연락처/프로필 정보(사용자 ID/이름)를 확보할 수 있다."
+    },
+    {
+      "instance_id": "INV-AT.COMMUNICATION_TOOL",
+      "label": "Communication Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.send_direct_message",
+        "tools.send_channel_message",
+        "tools.read_channel_messages",
+        "tools.read_inbox"
+      ],
+      "reason": "Agent는 Slack 메시지(DM, 채널 메시지)를 읽고 보내는 기능을 직접적으로 제공하는 도구들을 가지고 있다."
+    },
+    {
+      "instance_id": "INV-AT.CONNECTOR_API",
+      "label": "Connector / API",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_channels",
+        "tools.add_user_to_channel",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.send_direct_message",
+        "tools.send_channel_message",
+        "tools.get_users_in_channel",
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack",
+        "tools.get_webpage",
+        "tools.post_webpage"
+      ],
+      "reason": "Agent의 모든 도구는 Slack 서비스 또는 외부 웹페이지와 같은 외부 애플리케이션/서비스의 기능을 연결하고 호출하는 API/커넥터 역할을 한다."
+    },
+    {
+      "instance_id": "INV-AT.MCP_REMOTE_TOOL",
+      "label": "MCP / Remote Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_channels",
+        "tools.add_user_to_channel",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.send_direct_message",
+        "tools.send_channel_message",
+        "tools.get_users_in_channel",
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack",
+        "tools.get_webpage",
+        "tools.post_webpage"
+      ],
+      "reason": "Agent의 모든 도구는 Slack 서비스 또는 외부 웹페이지와 같은 원격 시스템의 기능을 호출하는 원격 함수 형태로 제공된다."
+    },
+    {
+      "instance_id": "INV-AT.SEARCH_RETRIEVAL",
+      "label": "Search / Retrieval Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.get_webpage",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.get_channels",
+        "tools.get_users_in_channel"
+      ],
+      "reason": "Agent는 웹페이지 콘텐츠, Slack 메시지, 채널 및 사용자 목록 등 다양한 외부/내부 정보를 조회하고 검색 결과를 반환하는 도구들을 가지고 있다."
+    },
+    {
+      "instance_id": "INV-CAI.ADMIN_MANAGEMENT",
+      "label": "Admin / Management Interface",
+      "element": "E6",
+      "subcode": "INV-CAI",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack",
+        "tools.add_user_to_channel"
+      ],
+      "reason": "Agent는 Slack 애플리케이션 내에서 사용자 및 채널을 관리하는 기능을 제공하며, 이는 애플리케이션의 운영 설정을 관리하는 행위에 해당한다."
+    },
+    {
+      "instance_id": "INV-CAI.IDENTITY_MANAGEMENT",
+      "label": "Identity Management",
+      "element": "E6",
+      "subcode": "INV-CAI",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack",
+        "tools.add_user_to_channel"
+      ],
+      "reason": "Agent는 Slack 사용자(Identity)를 초대하고 제거하며, 채널에 추가하는 등 사용자 Identity를 직접 관리하는 기능을 제공한다."
+    },
+    {
+      "instance_id": "SCP-SC.PRIVILEGE_ROLE",
+      "label": "Privilege / Role 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.add_user_to_channel",
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack"
+      ],
+      "reason": "`add_user_to_channel`, `invite_user_to_slack`, `remove_user_from_slack` 도구를 통해 Slack 내 사용자 권한 및 역할(채널 접근, 워크스페이스 접근)을 직접 변경할 수 있다."
+    },
+    {
+      "instance_id": "SCP-SC.USER_ACCOUNT",
+      "label": "User / Account 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.invite_user_to_slack",
+        "tools.remove_user_from_slack"
+      ],
+      "reason": "`invite_user_to_slack` 도구로 사용자 계정을 생성하고, `remove_user_from_slack` 도구로 사용자 계정을 삭제할 수 있어 사용자 계정 상태를 변경한다."
+    },
+    {
+      "instance_id": "SCP-SC.COMMUNICATION",
+      "label": "Communication 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.send_direct_message",
+        "tools.send_channel_message",
+        "tools.post_webpage"
+      ],
+      "reason": "`send_direct_message`, `send_channel_message` 도구를 통해 메시지를 생성하고 저장하며, `post_webpage` 도구를 통해 웹페이지 콘텐츠를 게시하여 커뮤니케이션 객체의 저장 상태를 변경한다."
+    },
+    {
+      "instance_id": "SCP-SC.CHANNEL_MEMBERSHIP",
+      "label": "Channel / Membership 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.add_user_to_channel"
+      ],
+      "reason": "`add_user_to_channel` 도구를 통해 채널의 구성원(멤버십) 상태를 직접 변경할 수 있다."
+    },
+    {
+      "instance_id": "ID-RG.TEXT_RESPONSE",
+      "label": "Text / Response",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "system_prompt"
+      ],
+      "reason": "Agent의 핵심 기능은 사용자에게 텍스트/채팅 응답을 생성하여 지원하는 것이며, 이는 시스템 프롬프트에 명시된 역할에 포함된다."
+    },
+    {
+      "instance_id": "ID-RG.LOG_NOTIFICATION",
+      "label": "Log / Notification",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.send_direct_message",
+        "tools.send_channel_message"
+      ],
+      "reason": "Agent는 'send_direct_message' 및 'send_channel_message' 도구를 통해 메시지를 생성하고 특정 대상에게 전달할 수 있으며, 이는 알림(Notification)의 메커니즘과 동일하다."
+    },
+    {
+      "instance_id": "ID-ER.EXTERNAL_API_HTTP",
+      "label": "외부 API / HTTP Endpoint",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.post_webpage"
+      ],
+      "reason": "`post_webpage` 도구가 특정 URL에 콘텐츠를 게시하여 외부 HTTP Endpoint로 정보를 전달하는 기능을 제공함."
+    },
+    {
+      "instance_id": "ID-ER.FILE_SHARE_PUBLIC_LINK",
+      "label": "File Share / Public Link",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Direct",
+      "matched": true,
+      "agent_evidence": [
+        "tools.post_webpage"
+      ],
+      "reason": "`post_webpage` 도구를 사용하여 특정 URL에 콘텐츠를 게시할 수 있으며, 이 URL이 공개된 웹 서버라면 외부에서 접근 가능한 공유 링크를 생성하는 것과 동일한 효과를 가짐."
+    },
+    {
+      "instance_id": "HD-UI.LINK_NAVIGATION",
+      "label": "Link 이동 / 클릭",
+      "element": "E10",
+      "subcode": "HD-UI",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.send_direct_message.input_schema.body",
+        "tools.send_channel_message.input_schema.body",
+        "tools.post_webpage.input_schema.url"
+      ],
+      "reason": "Agent can send messages containing URLs or post web pages at a URL, and users are expected to click links in a chat/web environment."
+    },
+    {
+      "instance_id": "HD-UI.INSTALL_RUN",
+      "label": "설치 / 실행",
+      "element": "E10",
+      "subcode": "HD-UI",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "tools.send_direct_message.input_schema.body",
+        "tools.send_channel_message.input_schema.body"
+      ],
+      "reason": "Agent can send messages with instructions or links that induce the user to install or run software/scripts."
+    },
+    {
+      "instance_id": "HD-UAD.ADVICE_DECISION_TRUST",
+      "label": "조언 / 의사결정 신뢰",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Structural",
+      "matched": true,
+      "agent_evidence": [
+        "system_prompt",
+        "tools.read_channel_messages",
+        "tools.read_inbox",
+        "tools.get_webpage",
+        "tools.send_direct_message",
+        "tools.send_channel_message"
+      ],
+      "reason": "The agent's core function is to 'assist the user' by providing information and using tools, implying its output (e.g., messages, summaries from reading tools) is intended to be trusted and used by the user for decision-making."
+    }
+  ],
+  "no_match": [
+    {
+      "instance_id": "ENT-DI.CLI",
+      "label": "CLI / Terminal 입력",
+      "element": "E1",
+      "subcode": "ENT-DI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 CLI/Terminal 인터페이스를 통한 직접 입력 메커니즘이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ENT-DI.API",
+      "label": "API 입력",
+      "element": "E1",
+      "subcode": "ENT-DI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent 자체의 API 또는 Endpoint를 통한 직접 입력 메커니즘이 명시되어 있지 않다. Agent는 도구를 호출하지만, 외부에서 Agent로 직접 API 요청을 보내는 채널은 없다."
+    },
+    {
+      "instance_id": "ENT-II.EMAIL",
+      "label": "Email / 메일",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 이메일 콘텐츠를 조회하거나 처리하는 기능(tool)이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ENT-II.FILE",
+      "label": "File / 문서",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 파일/문서 콘텐츠를 읽거나 처리하는 기능(tool)이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ENT-II.CALENDAR_EVENT",
+      "label": "Calendar / Event",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 캘린더 이벤트 콘텐츠를 조회하거나 처리하는 기능(tool)이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ENT-II.RETRIEVED_CONTENT",
+      "label": "검색 / 검색 콘텐츠",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 일반적인 검색, Retrieval, 또는 RAG(retrieval-augmented context/knowledge retrieval) 메커니즘이 명시되어 있지 않다. 특정 도구의 직접적인 조회 기능은 이에 해당하지 않는다."
+    },
+    {
+      "instance_id": "ENT-II.WORK_ITEM",
+      "label": "업무 항목 / 협업 콘텐츠",
+      "element": "E1",
+      "subcode": "ENT-II",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Issue, Ticket, PR, Task 등 특정 업무 객체에 저장된 콘텐츠를 직접 조회하거나 처리하는 기능(tool)이 명시되어 있지 않다. Slack 메시지 자체는 업무 항목이 아니다."
+    },
+    {
+      "instance_id": "INT-EC.TOOL_PLUGIN",
+      "label": "Tool / Plugin",
+      "element": "E2",
+      "subcode": "INT-EC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec은 고정된 도구 목록을 가지고 있을 뿐, 외부 Tool/Plugin을 설치·로드·편입하는 경로를 명시하지 않습니다."
+    },
+    {
+      "instance_id": "INT-EC.SKILL_FUNCTION",
+      "label": "Skill / Function",
+      "element": "E2",
+      "subcode": "INT-EC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec은 고정된 기능 목록을 가지고 있을 뿐, 외부 Skill/Function을 추가하는 경로를 명시하지 않습니다."
+    },
+    {
+      "instance_id": "INT-EC.MCP_REMOTE_TOOL",
+      "label": "MCP / Remote Tool",
+      "element": "E2",
+      "subcode": "INT-EC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 MCP Server 또는 Remote Function을 통해 실행 기능을 제공받거나 통합하는 메커니즘이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "INT-EC.PACKAGE_LIBRARY",
+      "label": "Package / Library",
+      "element": "E2",
+      "subcode": "INT-EC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec은 Agent의 실행 환경에 외부 Package/Library를 포함하거나 관리하는 메커니즘을 명시하지 않습니다."
+    },
+    {
+      "instance_id": "INT-EC.EXTENSION_ADDON",
+      "label": "Extension / Add-on",
+      "element": "E2",
+      "subcode": "INT-EC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 기존 Agent 기능에 추가되는 Extension/Add-on을 통합하는 메커니즘이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "INT-CR.SYSTEM_INSTRUCTION",
+      "label": "System Instruction / Prompt",
+      "element": "E2",
+      "subcode": "INT-CR",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 시스템 지시를 동적으로 로드하거나 수정하는 메커니즘이 명시되어 있지 않다. Agent가 고정된 system_prompt를 가진 것만으로는 외부 컴포넌트 편입 경로로 볼 수 없다."
+    },
+    {
+      "instance_id": "INT-CR.POLICY_GUARDRAIL",
+      "label": "Policy / Guardrail 설정",
+      "element": "E2",
+      "subcode": "INT-CR",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 정책/가드레일 설정을 동적으로 로드하거나 수정하는 메커니즘이 명시되어 있지 않다. Agent가 내재된 규칙을 따르는 것만으로는 외부 컴포넌트 편입 경로로 볼 수 없다."
+    },
+    {
+      "instance_id": "INT-CR.CONFIGURATION",
+      "label": "Configuration / Setting",
+      "element": "E2",
+      "subcode": "INT-CR",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent 또는 Tool의 동작값과 기능 설정을 외부에서 동적으로 로드하거나 변경하는 메커니즘이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INT-MT.MODEL_CHECKPOINT",
+      "label": "Model / Checkpoint",
+      "element": "E2",
+      "subcode": "INT-MT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 모델 또는 체크포인트를 설치, 로드, 편입하는 메커니즘이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "INT-MT.CHAT_TEMPLATE",
+      "label": "Model Chat Template",
+      "element": "E2",
+      "subcode": "INT-MT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 대화 템플릿을 설치, 로드, 편입하는 메커니즘이 명시되어 있지 않습니다. system_prompt는 고정된 내부 요소입니다."
+    },
+    {
+      "instance_id": "INT-MT.EMBEDDING_INDEX",
+      "label": "Embedding / Index",
+      "element": "E2",
+      "subcode": "INT-MT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 임베딩 또는 인덱스를 설치, 로드, 편입하는 메커니즘이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "INT-MT.ADAPTER_LORA",
+      "label": "Adapter / LoRA",
+      "element": "E2",
+      "subcode": "INT-MT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 어댑터 또는 LoRA 구성요소를 설치, 로드, 편입하는 메커니즘이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "CM-GM.CODE_SCRIPT",
+      "label": "생성 Code / Script",
+      "element": "E3",
+      "subcode": "CM-GM",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent가 코드나 스크립트를 생성하는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "CM-GM.PROMPT_INSTRUCTION",
+      "label": "생성 Prompt / Instruction",
+      "element": "E3",
+      "subcode": "CM-GM",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent가 다른 Agent나 Model에 전달할 Prompt나 Instruction을 생성하는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "CM-GM.FILE_DOCUMENT",
+      "label": "생성 File / Document",
+      "element": "E3",
+      "subcode": "CM-GM",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent가 결과물로 File이나 Document를 생성하는 기능이 명시되어 있지 않다. 'post_webpage'는 특정 URL에 콘텐츠를 게시하는 것이지, 새로운 파일이나 문서를 생성하는 메커니즘이 아니다."
+    },
+    {
+      "instance_id": "PA-CT.ACCESS_OAUTH_TOKEN",
+      "label": "Access / OAuth Token",
+      "element": "E4",
+      "subcode": "PA-CT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 OAuth 토큰에 접근하거나 이를 조작할 수 있는 메커니즘이 명시되어 있지 않음. Agent가 도구를 사용하는 것은 암묵적인 권한 사용일 뿐, 토큰 자체에 대한 접근 기능을 가정해야 함."
+    },
+    {
+      "instance_id": "PA-CT.API_SECRET_KEY",
+      "label": "API / Secret Key",
+      "element": "E4",
+      "subcode": "PA-CT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 API Secret Key에 접근하거나 이를 조작할 수 있는 메커니즘이 명시되어 있지 않음. Agent가 도구를 사용하는 것은 암묵적인 권한 사용일 뿐, Secret Key 자체에 대한 접근 기능을 가정해야 함."
+    },
+    {
+      "instance_id": "PA-CT.PASSWORD_CREDENTIAL",
+      "label": "Password / Credential",
+      "element": "E4",
+      "subcode": "PA-CT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 비밀번호 기반 인증 정보를 처리하거나 접근할 수 있는 메커니즘이 명시되어 있지 않음."
+    },
+    {
+      "instance_id": "PA-CT.SESSION_COOKIE",
+      "label": "Session / Cookie",
+      "element": "E4",
+      "subcode": "PA-CT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 'get_webpage' 또는 'post_webpage' 도구는 웹 페이지 콘텐츠를 다룰 뿐, 세션 쿠키에 접근하거나 이를 조작할 수 있는 메커니즘을 명시하지 않음. 웹 클라이언트의 내부 동작을 가정해야 함."
+    },
+    {
+      "instance_id": "PA-CT.CERT_PRIVATE_KEY",
+      "label": "Certificate / Private Key",
+      "element": "E4",
+      "subcode": "PA-CT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Certificate 또는 Private Key 기반 인증 정보를 처리하거나 접근할 수 있는 메커니즘이 명시되어 있지 않음."
+    },
+    {
+      "instance_id": "PA-ACB.AUTHENTICATION_CONTROL",
+      "label": "인증 통제",
+      "element": "E4",
+      "subcode": "PA-ACB",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 사용자/서비스의 신원을 확인하는 인증 통제 메커니즘이나 이를 우회할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "PA-ACB.AUTHORIZATION_SCOPE_CONTROL",
+      "label": "권한 / Scope 통제",
+      "element": "E4",
+      "subcode": "PA-ACB",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 명시된 도구 사용 범위를 넘어서거나, 도구 내부에 존재하는 추가적인 권한/Scope 통제를 우회할 수 있는 메커니즘이 존재하지 않는다. Agent는 명시된 도구들을 사용할 권한을 이미 가지고 있다."
+    },
+    {
+      "instance_id": "PA-ACB.OBJECT_ACCESS_CONTROL",
+      "label": "객체 단위 접근통제",
+      "element": "E4",
+      "subcode": "PA-ACB",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 특정 리소스(채널, 사용자 인박스, 웹페이지)에 대한 소유/접근 가능 여부를 확인하는 객체 단위 접근통제 메커니즘이나 이를 우회할 수 있는 기능이 명시되어 있지 않다. Agent는 명시된 도구들을 통해 리소스에 접근할 권한을 이미 가지고 있다."
+    },
+    {
+      "instance_id": "PA-ACB.APPROVAL_GATE",
+      "label": "승인 단계",
+      "element": "E4",
+      "subcode": "PA-ACB",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 민감 작업 수행 전에 필요한 사람 또는 시스템 승인 단계 메커니즘이나 이를 우회할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "DEX-UBD.CUSTOMER_CRM",
+      "label": "고객 / CRM 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 CRM 데이터를 직접 읽거나 조회하는 기능이 없으며, get_webpage 도구만으로는 특정 웹페이지가 CRM 데이터를 포함하고 이를 Agent가 식별/추출할 수 있다는 추가 가정이 필요하다."
+    },
+    {
+      "instance_id": "DEX-UBD.WORK_DOCUMENT",
+      "label": "업무 문서",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 일반적인 업무 문서(파일)를 읽는 기능이 없으며, get_webpage 도구는 웹페이지 콘텐츠를 반환할 뿐 특정 웹페이지가 업무 문서임을 가정하거나 일반적인 파일 시스템의 문서를 읽는 메커니즘이 아니다."
+    },
+    {
+      "instance_id": "DEX-UBD.CALENDAR_SCHEDULE",
+      "label": "Calendar / 일정 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 캘린더 또는 일정 데이터를 읽거나 조회하는 기능이 존재하지 않는다."
+    },
+    {
+      "instance_id": "DEX-UBD.ACCOUNT_PAYMENT",
+      "label": "Account / Payment 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 계좌, 결제 수단, 잔액 등 금융 계정 관련 데이터를 읽거나 조회하는 기능이 존재하지 않는다."
+    },
+    {
+      "instance_id": "DEX-UBD.TRANSACTION",
+      "label": "거래 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 송금, 결제, 거래 내역 등 거래 데이터를 읽거나 조회하는 기능이 존재하지 않는다."
+    },
+    {
+      "instance_id": "DEX-UBD.ORDER_RESERVATION",
+      "label": "주문 / 예약 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 주문 또는 예약 관련 데이터를 읽거나 조회하는 기능이 존재하지 않는다."
+    },
+    {
+      "instance_id": "DEX-UBD.PROJECT_WORK_ITEM",
+      "label": "Project / 업무항목 데이터",
+      "element": "E5",
+      "subcode": "DEX-UBD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 프로젝트, 이슈, 티켓, 태스크 등 업무 관리 데이터를 직접 읽거나 조회하는 기능이 존재하지 않는다."
+    },
+    {
+      "instance_id": "DEX-CS.TOKEN_SESSION",
+      "label": "Token / Session Credential",
+      "element": "E5",
+      "subcode": "DEX-CS",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 어떤 도구도 Access Token, Session, Cookie 등 인증 상태 정보를 직접 반환하거나 노출하는 메커니즘을 명시하지 않습니다. 이를 가정하려면 추가적인 환경 또는 도구의 기능을 가정해야 합니다."
+    },
+    {
+      "instance_id": "DEX-CS.API_SECRET_KEY",
+      "label": "API / Secret Key",
+      "element": "E5",
+      "subcode": "DEX-CS",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 어떤 도구도 API Key나 Secret Key를 직접 반환하거나 노출하는 메커니즘을 명시하지 않습니다. 'get_webpage'가 웹페이지 콘텐츠를 반환할 수 있으나, 특정 웹페이지에 API Key가 포함되어 반환될 것이라는 가정은 Spec에 없는 추가적인 환경 가정을 필요로 합니다."
+    },
+    {
+      "instance_id": "DEX-CS.PASSWORD_CREDENTIAL",
+      "label": "Password / Credential",
+      "element": "E5",
+      "subcode": "DEX-CS",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 어떤 도구도 사용자 또는 서비스의 Password 기반 Credential을 직접 반환하거나 노출하는 메커니즘을 명시하지 않습니다. 'get_webpage'가 웹페이지 콘텐츠를 반환할 수 있으나, 특정 웹페이지에 비밀번호가 포함되어 반환될 것이라는 가정은 Spec에 없는 추가적인 환경 가정을 필요로 합니다."
+    },
+    {
+      "instance_id": "DEX-CS.PRIVATE_KEY_CERT",
+      "label": "Private Key / Certificate",
+      "element": "E5",
+      "subcode": "DEX-CS",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 어떤 도구도 Private Key나 Certificate를 직접 반환하거나 노출하는 메커니즘을 명시하지 않습니다. 이를 가정하려면 추가적인 환경 또는 도구의 기능을 가정해야 합니다."
+    },
+    {
+      "instance_id": "DEX-SRD.SYSTEM_CONFIG_FILE",
+      "label": "System / Configuration File",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 시스템 또는 애플리케이션 설정 파일을 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다. 파일 시스템 접근 도구가 없습니다."
+    },
+    {
+      "instance_id": "DEX-SRD.ENVIRONMENT_VARIABLE",
+      "label": "환경변수",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 프로세스의 환경변수를 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "DEX-SRD.MEMORY_PROCESS",
+      "label": "Memory / Process 데이터",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 실행 중인 프로세스 메모리나 관련 정보를 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "DEX-SRD.LOG",
+      "label": "Log",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 시스템, 애플리케이션 또는 Agent가 기록한 실행 로그를 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "DEX-SRD.CLIPBOARD",
+      "label": "Clipboard",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 사용자 또는 시스템 클립보드에 임시 저장된 내용을 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다."
+    },
+    {
+      "instance_id": "DEX-SRD.SOURCE_REPOSITORY",
+      "label": "Source Code / Repository",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 'get_webpage' 도구는 일반 웹페이지 콘텐츠를 반환할 뿐, '프로그램 Source Code 와 Repository 내용'이라는 특정 데이터 유형을 직접적으로 뒷받침하는 메커니즘이 아닙니다. 특정 데이터 유형을 추론하는 것은 금지됩니다."
+    },
+    {
+      "instance_id": "DEX-SRD.BROWSER_LOCAL_SESSION",
+      "label": "Browser / Local Session 데이터",
+      "element": "E5",
+      "subcode": "DEX-SRD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 브라우저 히스토리, 로컬 스토리지, 세션 정보 등 브라우저 로컬 세션 데이터를 읽거나 조회할 수 있는 기능이 명시되어 있지 않습니다. Agent는 Slack Agent이며 브라우저 Agent가 아닙니다."
+    },
+    {
+      "instance_id": "INV-AT.CRM_ERP",
+      "label": "CRM / ERP Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent의 Slack 사용자/채널 관리 기능은 Slack 워크스페이스 내의 관리 기능이며, 일반적인 고객/업무/기업 자원 관리(CRM/ERP) 시스템의 기능으로 보기 어렵다."
+    },
+    {
+      "instance_id": "INV-AT.FILE_STORAGE",
+      "label": "File / Storage Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent는 웹페이지 콘텐츠를 조회/게시하는 기능은 있으나, 일반적인 파일/문서/클라우드 스토리지를 조회하거나 변경하는 직접적인 도구는 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-AT.CALENDAR_SCHEDULING",
+      "label": "Calendar / Scheduling Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 일정, 회의, 스케줄을 관리하는 도구가 존재하지 않는다."
+    },
+    {
+      "instance_id": "INV-AT.PAYMENT_FINANCIAL",
+      "label": "Payment / Financial Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 계좌, 결제, 송금 등 금융 기능을 수행하는 도구가 존재하지 않는다."
+    },
+    {
+      "instance_id": "INV-AT.RESERVATION_ORDER",
+      "label": "Reservation / Order Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 상품/서비스 예약/주문을 관리하는 도구가 존재하지 않는다."
+    },
+    {
+      "instance_id": "INV-AT.DATABASE_TOOL",
+      "label": "Database Tool",
+      "element": "E6",
+      "subcode": "INV-AT",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent의 도구들은 Slack 서비스의 특정 기능을 호출할 뿐, 일반적인 데이터베이스의 레코드를 직접 조회하거나 변경하는 도구는 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-SCU.COMPUTER_USE_GUI",
+      "label": "Computer-Use / GUI",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 화면, 마우스, 키보드 등 GUI 환경을 직접 제어하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-SCU.BROWSER_CONTROL",
+      "label": "Browser Control",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec의 `get_webpage`, `post_webpage` 도구는 웹 페이지 콘텐츠를 가져오거나 게시하는 기능일 뿐, 브라우저를 직접 열고 탐색, 입력, 클릭하는 GUI 기반의 브라우저 제어 메커니즘이 존재하지 않는다."
+    },
+    {
+      "instance_id": "INV-SCU.TERMINAL_CLI",
+      "label": "Terminal / CLI",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 OS 터미널 또는 명령줄 환경을 직접 사용하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-SCU.FILE_SYSTEM",
+      "label": "File System Tool",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 실행 환경의 파일 시스템을 직접 읽거나 변경하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-SCU.CODE_IDE",
+      "label": "Code / IDE Tool",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 소스 코드 작성, 편집, 실행을 지원하는 개발 환경 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-SCU.SSH_REMOTE_SHELL",
+      "label": "SSH / Remote Shell",
+      "element": "E6",
+      "subcode": "INV-SCU",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 원격 시스템에 셸 수준으로 접근하는 SSH 또는 원격 셸 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-CAI.CLOUD_CONSOLE",
+      "label": "Cloud Console",
+      "element": "E6",
+      "subcode": "INV-CAI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Cloud Resource를 생성·변경·관리하는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "INV-CAI.DEPLOYMENT_INFRA",
+      "label": "Deployment / Infrastructure Tool",
+      "element": "E6",
+      "subcode": "INV-CAI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Software 배포 또는 Infrastructure 구성·변경 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "EXEC-SE.PYTHON",
+      "label": "Python 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Python 코드를 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.JAVASCRIPT",
+      "label": "JavaScript 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 JavaScript 코드를 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.SHELL_SCRIPT",
+      "label": "Shell Script 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Shell Script를 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.POWERSHELL_SCRIPT",
+      "label": "PowerShell Script 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 PowerShell Script를 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.SQL_SCRIPT",
+      "label": "SQL / Query Script 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 SQL 쿼리/스크립트를 실행할 수 있는 기능이나 데이터베이스 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.NOTEBOOK_CELL",
+      "label": "Notebook / Code Cell 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Notebook/Code Cell을 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SE.EXECUTABLE_BINARY",
+      "label": "Executable / Binary 실행",
+      "element": "E7",
+      "subcode": "EXEC-SE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 실행 가능한 바이너리 프로그램을 실행할 수 있는 기능이나 환경이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "EXEC-SSE.SHELL_OS_COMMAND",
+      "label": "Shell / OS Command",
+      "element": "E7",
+      "subcode": "EXEC-SSE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [
+        "tools"
+      ],
+      "reason": "Agent Spec에 Shell 또는 OS 명령을 직접 실행할 수 있는 기능이나 도구가 명시되어 있지 않다. 모든 도구는 Slack API 또는 HTTP 요청에 국한된다."
+    },
+    {
+      "instance_id": "EXEC-SSE.POWERSHELL_WINDOWS_COMMAND",
+      "label": "PowerShell / Windows Command",
+      "element": "E7",
+      "subcode": "EXEC-SSE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [
+        "tools"
+      ],
+      "reason": "Agent Spec에 PowerShell 또는 Windows 명령을 직접 실행할 수 있는 기능이나 도구가 명시되어 있지 않다. 모든 도구는 Slack API 또는 HTTP 요청에 국한된다."
+    },
+    {
+      "instance_id": "EXEC-SSE.PACKAGE_MANAGEMENT",
+      "label": "Package Management Command",
+      "element": "E7",
+      "subcode": "EXEC-SSE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [
+        "tools"
+      ],
+      "reason": "Agent Spec에 패키지 설치/삭제/변경과 같은 패키지 관리 명령을 실행할 수 있는 기능이나 도구가 명시되어 있지 않다. 모든 도구는 Slack API 또는 HTTP 요청에 국한된다."
+    },
+    {
+      "instance_id": "EXEC-SSE.CONTAINER_ORCHESTRATION",
+      "label": "Container / Orchestration Command",
+      "element": "E7",
+      "subcode": "EXEC-SSE",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [
+        "tools"
+      ],
+      "reason": "Agent Spec에 컨테이너 또는 오케스트레이션 명령을 실행할 수 있는 기능이나 도구가 명시되어 있지 않다. 모든 도구는 Slack API 또는 HTTP 요청에 국한된다."
+    },
+    {
+      "instance_id": "SCP-SC.FILE_SHARING",
+      "label": "File / 공유 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 파일 생성, 수정, 삭제 또는 일반적인 파일 공유 메커니즘이 명시되어 있지 않다. `post_webpage`는 웹페이지 콘텐츠를 게시하는 기능으로, 일반적인 파일 공유와는 다르다."
+    },
+    {
+      "instance_id": "SCP-SC.CONFIGURATION",
+      "label": "Configuration 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 애플리케이션 또는 시스템의 설정(Configuration) 값을 변경할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-SC.CALENDAR_SCHEDULE",
+      "label": "Calendar / Schedule 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 일정, 회의, 스케줄을 생성, 수정, 삭제할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-SC.DEVICE_SYSTEM",
+      "label": "Device / System 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 실제 장치, OS, 또는 시스템의 동작이나 설정을 변경할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-SC.TRANSACTION_PAYMENT",
+      "label": "Transaction / Payment 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 송금, 거래, 결제를 생성하거나 수정할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-SC.RESERVATION_ORDER",
+      "label": "Reservation / Order 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 예약이나 주문을 생성, 수정, 취소할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-SC.WORKFLOW_TASK",
+      "label": "Workflow / Task 상태",
+      "element": "E8",
+      "subcode": "SCP-SC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 워크플로우, 태스크, 잡 등을 생성, 수정, 실행 예약할 수 있는 기능이 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "SCP-CC.CONVERSATION_SESSION_CONTEXT",
+      "label": "Conversation / Session Context",
+      "element": "E8",
+      "subcode": "SCP-CC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 'cross-turn state' 또는 'cross-session state'와 같이 대화/세션 컨텍스트를 지속적으로 유지하고 활용하는 메커니즘이 명시적으로 존재하지 않음. 이는 Persistence Hard Gate의 요구사항에 부합하지 않음."
+    },
+    {
+      "instance_id": "SCP-CC.LONG_TERM_MEMORY",
+      "label": "Long-term Memory",
+      "element": "E8",
+      "subcode": "SCP-CC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 'persistent memory', 'long-term memory', 'cross-session state' 등 세션을 넘어 정보를 저장하고 조회하는 장기 기억 메커니즘이 명시적으로 존재하지 않음. 이는 Persistence Hard Gate의 요구사항에 부합하지 않음."
+    },
+    {
+      "instance_id": "SCP-CC.RAG_KNOWLEDGE_BASE",
+      "label": "RAG / Knowledge Base",
+      "element": "E8",
+      "subcode": "SCP-CC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 'persistent RAG·knowledge store'와 같이 지속적으로 저장되어 검색에 사용되는 지식 저장소 메커니즘이 명시적으로 존재하지 않음. 이는 Persistence Hard Gate의 요구사항에 부합하지 않음."
+    },
+    {
+      "instance_id": "SCP-CC.PERSISTENT_PROMPT_CONFIG",
+      "label": "지속 Prompt / Configuration",
+      "element": "E8",
+      "subcode": "SCP-CC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [
+        "system_prompt"
+      ],
+      "reason": "Agent Spec에 Agent가 자신의 'system_prompt'나 다른 설정을 영구적으로 변경하고 이를 이후 실행에 적용할 수 있는 메커니즘이 명시적으로 존재하지 않음. 'system_prompt' 자체는 존재하나, 이를 변경하여 지속시키는 공격 메커니즘은 가정해야 함."
+    },
+    {
+      "instance_id": "SCP-CC.TRAINING_FINETUNING_DATA",
+      "label": "Training / Fine-tuning Data",
+      "element": "E8",
+      "subcode": "SCP-CC",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 Agent의 상호작용이나 처리 데이터가 모델 학습 또는 Fine-tuning에 사용되어 모델 동작에 장기적인 영향을 미치는 메커니즘이 명시적으로 존재하지 않음."
+    },
+    {
+      "instance_id": "ID-RG.FILE_DOCUMENT",
+      "label": "File / Document",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 파일이나 문서를 생성하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ID-RG.CODE_SCRIPT",
+      "label": "Code / Script",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 코드나 스크립트를 생성하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ID-RG.IMAGE_MEDIA",
+      "label": "Image / Media",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 이미지, 그래프 또는 기타 시각적 미디어를 생성하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ID-RG.STRUCTURED_DATA",
+      "label": "Structured Data",
+      "element": "E9",
+      "subcode": "ID-RG",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 JSON, CSV, Table 등 구조화된 데이터를 별도의 결과물로 생성하는 기능이나 도구가 명시되어 있지 않다."
+    },
+    {
+      "instance_id": "ID-ER.EMAIL_EXTERNAL_MESSAGE",
+      "label": "Email / 외부 Message",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 이메일 또는 일반 외부 메시지 수신자에게 정보를 전달하는 기능이 명시되어 있지 않음."
+    },
+    {
+      "instance_id": "ID-ER.EXTERNAL_SERVICE_RECIPIENT",
+      "label": "외부 Service / Recipient",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 `ID-ER.EXTERNAL_API_HTTP`로 매핑된 `post_webpage` 외에, 업무·Application 기능을 이용해 별도의 외부 계정·수신자에게 데이터를 전달하는 다른 메커니즘이 명시되어 있지 않음."
+    },
+    {
+      "instance_id": "ID-ER.WEB_RENDERING_RESOURCE",
+      "label": "Web Rendering / 외부 Resource",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 웹 렌더링 기능이나 외부 리소스 로딩 과정에서 Agent의 정보가 외부로 노출될 수 있는 메커니즘이 명시되어 있지 않음. `post_webpage`는 콘텐츠를 게시할 뿐, Agent가 직접 렌더링을 수행하지 않음."
+    },
+    {
+      "instance_id": "ID-ER.EXTERNAL_STORAGE_UPLOAD",
+      "label": "외부 Storage / File Upload",
+      "element": "E9",
+      "subcode": "ID-ER",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent Spec에 외부 Storage에 Data나 File을 직접 기록하거나 업로드하는 기능이 명시되어 있지 않음. `post_webpage`는 웹페이지 콘텐츠 게시 기능이며, 일반적인 파일 업로드 메커니즘으로 보기 어려움."
+    },
+    {
+      "instance_id": "HD-UI.INFORMATION_ENTRY",
+      "label": "정보 입력",
+      "element": "E10",
+      "subcode": "HD-UI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent cannot create or manage external forms/pages for user input, nor receive structured input from them beyond the direct chat interface."
+    },
+    {
+      "instance_id": "HD-UI.FILE_DOWNLOAD_OPEN",
+      "label": "File 다운로드 / 열기",
+      "element": "E10",
+      "subcode": "HD-UI",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent lacks direct file creation, upload, or serving capabilities to provide a file for download; it can only provide links to external files, which falls under link navigation."
+    },
+    {
+      "instance_id": "HD-UAD.COMMAND_EXECUTION_APPROVAL",
+      "label": "명령 / 실행 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent executes commands directly via tools; no explicit human approval mechanism for command execution is present in the spec."
+    },
+    {
+      "instance_id": "HD-UAD.PRIVILEGE_PERMISSION_APPROVAL",
+      "label": "권한 / Permission 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent spec does not include any mechanism for the agent to request or for a user to grant additional privileges/permissions to the agent."
+    },
+    {
+      "instance_id": "HD-UAD.AUTH_MFA_APPROVAL",
+      "label": "인증 / MFA 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent spec does not include any mechanism for the agent to initiate or for a user to approve MFA/authentication requests."
+    },
+    {
+      "instance_id": "HD-UAD.OAUTH_APP_APPROVAL",
+      "label": "OAuth / App 연결 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent spec does not include any mechanism for the agent to initiate or for a user to approve OAuth/App connections."
+    },
+    {
+      "instance_id": "HD-UAD.PAYMENT_TRANSFER_APPROVAL",
+      "label": "결제 / 송금 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent spec does not include any tools or mechanisms for financial operations or their approval."
+    },
+    {
+      "instance_id": "HD-UAD.FILE_SHARE_PUBLICATION_APPROVAL",
+      "label": "File 공유 / 공개 승인",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent can post web pages directly via 'post_webpage', but there is no explicit human approval mechanism for sharing or publishing files/data."
+    },
+    {
+      "instance_id": "HD-UAD.SECURITY_WARNING_OVERRIDE",
+      "label": "보안 경고 무시 / 진행",
+      "element": "E10",
+      "subcode": "HD-UAD",
+      "evidence_type": "Assumption",
+      "matched": false,
+      "agent_evidence": [],
+      "reason": "Agent spec does not include any mechanism for presenting security warnings or for a user to override them."
+    }
+  ],
+  "invalid_dropped": [],
+  "matched_matrix": {
+    "E1": {
+      "name_ko": "진입",
+      "name_en": "Entry",
+      "description": "Direct + Indirect 모든 입력 수단",
+      "subcategories": {
+        "ENT-DI": {
+          "name_ko": "직접 입력",
+          "name_en": "Direct Input",
+          "description": "공격자가 Agent 의 직접 입력 인터페이스를 통해 지시 또는 콘텐츠를 전달",
+          "instances": {
+            "ENT-DI.CHAT": {
+              "name_ko": "Chat / 화면 입력",
+              "name_en": "Chat / UI Input",
+              "description": "사용자가 Agent 의 Chat·UI 화면을 통해 직접 입력하는 콘텐츠",
+              "example": "Chat 창에 직접 Prompt 입력"
+            }
+          }
+        },
+        "ENT-II": {
+          "name_ko": "간접 입력",
+          "name_en": "Indirect Input",
+          "description": "이메일·파일·웹사이트 등 외부 콘텐츠가 Agent 의 작업 과정에서 간접적으로 Context 에 유입",
+          "instances": {
+            "ENT-II.WEB_URL": {
+              "name_ko": "Web / URL",
+              "name_en": "Web / URL",
+              "description": "Agent 가 접근하여 읽는 외부 Web page 또는 URL 콘텐츠",
+              "example": "Browser 로 Web page 내용 확인"
+            },
+            "ENT-II.MESSAGE_SNS": {
+              "name_ko": "Message / SNS",
+              "name_en": "Message / SNS",
+              "description": "Messenger·SNS·협업 서비스에 존재하는 외부 메시지 콘텐츠",
+              "example": "Slack·Teams 메시지 조회"
+            },
+            "ENT-II.APPLICATION_RECORD": {
+              "name_ko": "애플리케이션 / 서비스 레코드",
+              "name_en": "Application / Service Record",
+              "description": "연결된 업무 App·서비스에 저장되어 Agent 가 조회하는 Record 형태의 콘텐츠",
+              "example": "거래내역·예약정보·고객 Record 조회"
+            }
+          }
+        }
+      }
+    },
+    "E2": {
+      "name_ko": "편입",
+      "name_en": "Integration",
+      "description": "Agent 기능 범위 내에 외부 도구·설정·모델 등의 구성요소가 받아들여짐",
+      "subcategories": {
+        "INT-CR": {
+          "name_ko": "설정·규칙",
+          "name_en": "Config·Rule",
+          "description": "Agent 또는 Tool 의 동작 방식·조건·절차를 정하는 구성정보",
+          "instances": {
+            "INT-CR.INSTRUCTION_FILE": {
+              "name_ko": "Instruction File",
+              "name_en": "Instruction File",
+              "description": "Agent 가 작업 과정에서 참고하는 별도의 지시 파일",
+              "example": "AGENTS.md 등"
+            },
+            "INT-CR.WORKFLOW_PROCEDURE": {
+              "name_ko": "Workflow / Procedure 정의",
+              "name_en": "Workflow / Procedure Definition",
+              "description": "Agent 가 수행할 작업의 단계와 절차를 정의하는 구성",
+              "example": "승인→실행 Workflow"
+            }
+          }
+        }
+      }
+    },
+    "E3": {
+      "name_ko": "인지 조작",
+      "name_en": "Cognition Manipulation",
+      "description": "외부 영향으로 Agent 의 판단·계획 또는 생성 결과가 원래 의도와 다르게 변경",
+      "subcategories": {
+        "CM-AM": {
+          "name_ko": "행동 조작",
+          "name_en": "Action Manipulation",
+          "description": "Agent 가 무엇을 하고 어떻게 행동할지에 대한 판단·Planning 이 변경",
+          "instances": {
+            "CM-AM.GOAL_PLAN": {
+              "name_ko": "목표 / 계획",
+              "name_en": "Goal / Plan",
+              "description": "Agent 가 수행하려는 목표 또는 작업 계획",
+              "example": "조회 작업이 다른 작업 수행 계획으로 변경"
+            },
+            "CM-AM.TOOL_SELECTION": {
+              "name_ko": "Tool 선택",
+              "name_en": "Tool Selection",
+              "description": "작업 수행에 사용할 Tool 을 선택하는 판단",
+              "example": "조회 Tool 대신 송금 Tool 선택"
+            },
+            "CM-AM.TOOL_ARGUMENT": {
+              "name_ko": "Tool 입력값",
+              "name_en": "Tool Argument",
+              "description": "Tool 호출에 전달되는 입력값·Parameter",
+              "example": "recipient, amount 값 변경"
+            },
+            "CM-AM.ACTION_ORDER": {
+              "name_ko": "작업 순서",
+              "name_en": "Action Order",
+              "description": "복수 행동 또는 Tool 호출의 수행 순서",
+              "example": "확인 전에 실행부터 수행"
+            }
+          }
+        },
+        "CM-GM": {
+          "name_ko": "생성 조작",
+          "name_en": "Generation Manipulation",
+          "description": "Agent 가 생성하는 Content·Code·Prompt·File 등의 결과가 변경",
+          "instances": {
+            "CM-GM.RESPONSE_CONTENT": {
+              "name_ko": "생성 Response / Content",
+              "name_en": "Generated Response / Content",
+              "description": "Agent 가 생성하는 텍스트·정보·콘텐츠",
+              "example": "잘못된 설명 또는 정보 생성"
+            }
+          }
+        }
+      }
+    },
+    "E4": {
+      "name_ko": "권한·권위",
+      "name_en": "Privilege/Authority",
+      "description": "Agent 에게 부여된 권한의 사용, Credential 을 통한 접근, 또는 접근통제의 우회",
+      "subcategories": {
+        "PA-GA": {
+          "name_ko": "부여 권한",
+          "name_en": "Granted Authority",
+          "description": "Agent 에게 이미 부여되거나 위임된 권한으로 기능·자원에 접근",
+          "instances": {
+            "PA-GA.USER_AUTHORITY": {
+              "name_ko": "사용자 위임 권한",
+              "name_en": "User-delegated Authority",
+              "description": "사용자가 Agent 에 위임한 작업·자원 접근 권한",
+              "example": "사용자 Calendar 수정 권한"
+            },
+            "PA-GA.SERVICE_APP_AUTHORITY": {
+              "name_ko": "Service / App 권한",
+              "name_en": "Service / App Authority",
+              "description": "Service·App·Connector 자체에 부여된 권한",
+              "example": "Slack App scope"
+            },
+            "PA-GA.ADMIN_ELEVATED_AUTHORITY": {
+              "name_ko": "관리자 / 상위 권한",
+              "name_en": "Admin / Elevated Authority",
+              "description": "일반 사용자보다 높은 관리·특수 작업 권한",
+              "example": "Admin 기능 사용"
+            }
+          }
+        }
+      }
+    },
+    "E5": {
+      "name_ko": "데이터 확보",
+      "name_en": "Data Exfiltration",
+      "description": "공격자가 목표로 하는 민감 데이터에 접근하여 정보를 확보",
+      "subcategories": {
+        "DEX-UBD": {
+          "name_ko": "사용자·업무 데이터",
+          "name_en": "User·Business Data",
+          "description": "사용자·조직·업무 활동과 관련된 데이터",
+          "instances": {
+            "DEX-UBD.COMMUNICATION_CONTENT": {
+              "name_ko": "커뮤니케이션 내용",
+              "name_en": "Communication Content",
+              "description": "Email·Message·Chat 등 사람 간 커뮤니케이션 내용",
+              "example": "Email 본문·Slack 메시지"
+            },
+            "DEX-UBD.CONTACT_PROFILE": {
+              "name_ko": "Contact / Profile 데이터",
+              "name_en": "Contact / Profile Data",
+              "description": "연락처·사용자 Profile·개인 기본정보",
+              "example": "이름·주소·전화번호"
+            }
+          }
+        }
+      }
+    },
+    "E6": {
+      "name_ko": "호출",
+      "name_en": "Invocation",
+      "description": "Agent 가 작업을 수행하기 위해 Tool·API·System 기능의 실행 요청을 생성",
+      "subcategories": {
+        "INV-AT": {
+          "name_ko": "응용 도구",
+          "name_en": "Application Tool",
+          "description": "일반적인 업무·Application 기능을 수행하는 Tool 을 호출",
+          "instances": {
+            "INV-AT.COMMUNICATION_TOOL": {
+              "name_ko": "Communication Tool",
+              "name_en": "Communication Tool",
+              "description": "Email·Message 등 커뮤니케이션 기능을 제공하는 Tool",
+              "example": "Email/Slack Tool"
+            },
+            "INV-AT.CONNECTOR_API": {
+              "name_ko": "Connector / API",
+              "name_en": "Connector / API",
+              "description": "외부 Application·Service 기능을 연결하는 일반 API·Connector",
+              "example": "SaaS Connector"
+            },
+            "INV-AT.MCP_REMOTE_TOOL": {
+              "name_ko": "MCP / Remote Tool",
+              "name_en": "MCP / Remote Tool",
+              "description": "MCP 또는 Remote Function 형태로 제공되는 Tool",
+              "example": "MCP Tool"
+            },
+            "INV-AT.SEARCH_RETRIEVAL": {
+              "name_ko": "Search / Retrieval Tool",
+              "name_en": "Search / Retrieval Tool",
+              "description": "외부·내부 정보를 검색·검색결과로 반환하는 Tool",
+              "example": "RAG Search"
+            }
+          }
+        },
+        "INV-CAI": {
+          "name_ko": "제어·관리 인터페이스",
+          "name_en": "Control·Admin Interface",
+          "description": "Agent·서비스·인프라의 운영·관리 기능을 제공하는 제어 인터페이스를 호출",
+          "instances": {
+            "INV-CAI.ADMIN_MANAGEMENT": {
+              "name_ko": "Admin / Management Interface",
+              "name_en": "Admin / Management Interface",
+              "description": "Agent·Application·System 의 운영 설정을 관리하는 기능",
+              "example": "Admin Console/API"
+            },
+            "INV-CAI.IDENTITY_MANAGEMENT": {
+              "name_ko": "Identity Management",
+              "name_en": "Identity Management",
+              "description": "User·Role·Permission 등 Identity 를 관리하는 기능",
+              "example": "IAM Tool"
+            }
+          }
+        }
+      }
+    },
+    "E8": {
+      "name_ko": "상태 변경·지속",
+      "name_en": "State Change & Persistence",
+      "description": "시스템 데이터·상태가 변경되거나, 저장된 Context·Memory 등이 이후에도 계속 영향을 미침",
+      "subcategories": {
+        "SCP-SC": {
+          "name_ko": "상태 변경",
+          "name_en": "State Change",
+          "description": "Agent 행동으로 실제 System·Application 데이터 또는 상태가 변경",
+          "instances": {
+            "SCP-SC.PRIVILEGE_ROLE": {
+              "name_ko": "Privilege / Role 상태",
+              "name_en": "Privilege / Role State",
+              "description": "User·Service 의 권한·Role 상태",
+              "example": "Admin Role 부여"
+            },
+            "SCP-SC.USER_ACCOUNT": {
+              "name_ko": "User / Account 상태",
+              "name_en": "User / Account State",
+              "description": "User Account·Profile·Credential 관련 저장 상태",
+              "example": "Password·주소 변경"
+            },
+            "SCP-SC.COMMUNICATION": {
+              "name_ko": "Communication 상태",
+              "name_en": "Communication State",
+              "description": "Email·Message 등 커뮤니케이션 객체의 저장 상태",
+              "example": "Message 삭제"
+            },
+            "SCP-SC.CHANNEL_MEMBERSHIP": {
+              "name_ko": "Channel / Membership 상태",
+              "name_en": "Channel / Membership State",
+              "description": "Channel·Group 의 구성원·멤버십 상태",
+              "example": "사용자 Channel 추가"
+            }
+          }
+        }
+      }
+    },
+    "E9": {
+      "name_ko": "정보 공개",
+      "name_en": "Information Disclosure",
+      "description": "공격 결과가 생성되거나, 생성·확보된 정보가 실제 외부 대상으로 전달·노출",
+      "subcategories": {
+        "ID-RG": {
+          "name_ko": "결과 생성",
+          "name_en": "Result Generation",
+          "description": "정보가 포함된 결과물이 생성되었으나 별도의 외부 전달 여부는 아직 요구하지 않음",
+          "instances": {
+            "ID-RG.TEXT_RESPONSE": {
+              "name_ko": "Text / Response",
+              "name_en": "Text / Response",
+              "description": "Agent 가 생성하는 일반 Text·Chat Response",
+              "example": "고객정보 포함 답변"
+            },
+            "ID-RG.LOG_NOTIFICATION": {
+              "name_ko": "Log / Notification",
+              "name_en": "Log / Notification",
+              "description": "Log·Alert·Notification 형태로 생성되는 결과",
+              "example": "내부정보 Notification"
+            }
+          }
+        },
+        "ID-ER": {
+          "name_ko": "외부 공개",
+          "name_en": "External Release",
+          "description": "확보하거나 생성한 정보가 현재 Agent 내부 결과를 넘어 별도의 외부 수신자·서비스·저장소로 전달 또는 공개",
+          "instances": {
+            "ID-ER.EXTERNAL_API_HTTP": {
+              "name_ko": "외부 API / HTTP Endpoint",
+              "name_en": "External API / HTTP Endpoint",
+              "description": "HTTP·API 요청으로 외부 Server·Endpoint 에 정보를 전달",
+              "example": "외부 POST 요청"
+            },
+            "ID-ER.FILE_SHARE_PUBLIC_LINK": {
+              "name_ko": "File Share / Public Link",
+              "name_en": "File Share / Public Link",
+              "description": "외부에서 접근 가능한 공유 Link 또는 공개 권한을 생성",
+              "example": "Public Share Link"
+            }
+          }
+        }
+      }
+    },
+    "E10": {
+      "name_ko": "인간 의존",
+      "name_en": "Human Dependency",
+      "description": "공격 성공을 위해 사람이 Agent 결과를 신뢰하고 실제 행동·승인·의사결정을 수행해야 함",
+      "subcategories": {
+        "HD-UI": {
+          "name_ko": "사용자 유도",
+          "name_en": "User Inducement",
+          "description": "Agent 결과에 따라 사용자가 구체적인 추가 행동을 수행하도록 유도",
+          "instances": {
+            "HD-UI.LINK_NAVIGATION": {
+              "name_ko": "Link 이동 / 클릭",
+              "name_en": "Link Navigation / Click",
+              "description": "사용자가 Agent 가 제공한 Link 를 열거나 클릭",
+              "example": "외부 URL 클릭"
+            },
+            "HD-UI.INSTALL_RUN": {
+              "name_ko": "설치 / 실행",
+              "name_en": "Install / Run",
+              "description": "사용자가 Software·Script·Application 을 설치 또는 실행",
+              "example": "프로그램 실행"
+            }
+          }
+        },
+        "HD-UAD": {
+          "name_ko": "사용자 승인·판단",
+          "name_en": "User Approval·Decision",
+          "description": "공격 성공이 사람의 승인·신뢰·판단에 의존",
+          "instances": {
+            "HD-UAD.ADVICE_DECISION_TRUST": {
+              "name_ko": "조언 / 의사결정 신뢰",
+              "name_en": "Advice / Decision Trust",
+              "description": "Agent 의 조언·추천·분석 결과를 신뢰하여 실제 의사결정",
+              "example": "잘못된 추천을 믿고 선택"
+            }
+          }
+        }
+      }
+    }
+  },
+  "elements": [
+    "E1",
+    "E10",
+    "E2",
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E8",
+    "E9"
+  ]
+}
