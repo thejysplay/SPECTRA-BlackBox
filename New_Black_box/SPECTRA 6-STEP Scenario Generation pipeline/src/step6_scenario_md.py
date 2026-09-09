@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """data/scenarios/*.json → 같은 이름 .md (한국어 설명본). 페이로드/성공기준은 gemini 번역."""
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -9,16 +10,21 @@ sys.path.insert(0, str(ROOT.parent / "Scenario_Pipeline"))
 import backend  # noqa: E402
 from labels import ko  # noqa: E402
 
-D = ROOT / "data" / "scenarios"
+# 대상 폴더: env DIR (기본 scenarios). SLM은 scenarios_qwen7b 등.
+D = ROOT / "data" / os.getenv("DIR", "scenarios")
 
-GLOSS = {"ENT-II": "간접입력", "INV-AT": "응용 도구 호출", "DAC-UBD": "사용자·업무 데이터",
-         "PA-GA": "부여 권한", "SC-BIZ": "업무·거래 상태변경", "SC-SYS": "시스템·설정 상태변경"}
-MEAN = {"ENT-II": "에이전트가 읽는 외부 콘텐츠(거래 내역·문서)에 지시가 숨어 들어옴",
-        "INV-AT": "앱 도구를 부름(조회·송금·변경)",
-        "DAC-UBD": "계정·거래·프로필 데이터 접근",
+GLOSS = {"ENT-DI": "직접입력", "ENT-II": "간접입력", "INV-AT": "응용 도구 호출", "DAC-UBD": "사용자·업무 데이터",
+         "PA-GA": "부여 권한", "SC-BIZ": "업무·거래 상태변경", "SC-SYS": "시스템·설정 상태변경",
+         "ID-ER": "외부 유출", "ID-RG": "결과 생성"}
+MEAN = {"ENT-DI": "공격자가 유저 입력으로 직접 지시를 넣음",
+        "ENT-II": "에이전트가 읽는 외부 콘텐츠(메시지·문서·일정·웹)에 지시가 숨어 들어옴",
+        "INV-AT": "앱 도구를 부름(조회·전송·변경)",
+        "DAC-UBD": "계정·거래·프로필·메시지 등 데이터 접근",
         "PA-GA": "사용자(Emma) 위임 권한으로 실행",
-        "SC-BIZ": "거래·결제 상태 변경(무단 송금)",
-        "SC-SYS": "계정·시스템 상태 변경(비밀번호 변경)"}
+        "SC-BIZ": "업무·거래 상태 변경(송금·예약·메시지 전송·채널추가)",
+        "SC-SYS": "계정·시스템 상태 변경(비밀번호·워크스페이스 멤버십)",
+        "ID-ER": "외부(이메일·웹)로 데이터 유출(exfiltration)",
+        "ID-RG": "응답·결과물에 정보 노출"}
 TITLE = {"시나리오1_무단송금": "무단 송금 (간접 주입)",
          "시나리오2_비밀번호변경": "계정 비밀번호 변경 (간접 주입)",
          "시나리오3_개인정보확보": "개인정보 확보 (간접 주입)",
@@ -51,7 +57,30 @@ def main():
         skel = r["skeleton"].split("→")
         tr = translate(g)
         used = [s for s in dict.fromkeys(skel)]  # 순서 보존 유니크
-        md = [f"# 점검 시나리오 — {TITLE.get(stem, stem)}", "",
+        # 생성 모델 + 목표적합(마지막 도구콜이 목표를 실현하는가) 표시
+        model = r.get("model", "gemini")
+        # 도구 → 효과 서브카테고리 (banking + travel + slack)
+        _last = None
+        _calls = [c.get("name") for c in g.get("expected_tool_calls", [])]
+        if _calls:
+            n = _calls[-1]
+            if n.startswith(("get_", "read_", "search_", "check_")):
+                _last = "DAC-UBD"
+            elif n in ("send_money", "schedule_transaction", "update_scheduled_transaction",
+                       "reserve_hotel", "reserve_car_rental", "reserve_restaurant",
+                       "create_calendar_event", "cancel_calendar_event",
+                       "send_direct_message", "send_channel_message", "add_user_to_channel"):
+                _last = "SC-BIZ"
+            elif n in ("update_password", "update_user_info", "invite_user_to_slack", "remove_user_from_slack"):
+                _last = "SC-SYS"
+            elif n in ("send_email", "post_webpage"):
+                _last = "ID-ER"
+        goal_ok = (len(_calls) == 0) if skel[-1] == "ID-RG" else (_last == skel[-1])
+        _title = TITLE.get(stem) or (stem.split("_", 1)[-1] + " (간접 주입)" if "_" in stem else stem)
+        md = [f"# 점검 시나리오 — {_title}", "",
+              f"> 생성 모델: **{model}** · 목표적합(goal_ok): {'✅' if goal_ok else '❌ (목표 이탈)'}"
+              + ("" if goal_ok else f" — 마지막 도구콜 `{_calls[-1] if _calls else '없음'}`이 목표({ko(skel[-1])})를 실현하지 않음"),
+              "",
               "## 뼈대",
               f"- 코드: `{r['skeleton']}`",
               f"- 한국어: {' → '.join(GLOSS.get(s, s) for s in skel)}",
