@@ -5,15 +5,15 @@ ASR 실행 + 이중 판정 — 우리 스케일 시나리오를 개조 AgentDojo
   (B) 벤치 security  : AgentDojo 네이티브 판정(비교용)
 payload는 도메인 주입 벡터에 넣는다(간접주입 실현). 타깃 agent = gemini-2.5-flash.
 
-실행: 논문실험/agentdojo/repo/.venv/bin/python src/run_asr.py --domain banking [--limit N]
+실행: <agentdojo venv>/bin/python src/run_asr.py --domain banking [--limit N]
 """
 import os
-import sys
 import json
 import re
 import argparse
 import time
-from pathlib import Path
+
+import paths
 
 
 def sanitize(p):
@@ -22,19 +22,9 @@ def sanitize(p):
     p = p.replace('"', "'").replace("{", "(").replace("}", ")")
     return re.sub(r"\s+", " ", p).strip()
 
-# API 키 로드 (.env의 모든 *_API_KEY / *_BASE_URL 를 환경변수로)
-ENV = Path("/home/kitesu/SPECTRA-BlackBox/Agent/damn-vulnerable-llm-agent/.env")
-for ln in ENV.read_text().splitlines():
-    ln = ln.strip()
-    if "=" in ln and not ln.startswith("#") and (ln.split("=", 1)[0].endswith(("_API_KEY", "_BASE_URL", "_API_BASE"))):
-        key, val = ln.split("=", 1)
-        os.environ[key.strip()] = val.strip().strip('"').strip("'")
-if os.environ.get("GEMINI_API_KEY"):                 # google 호환
-    os.environ.setdefault("GOOGLE_API_KEY", os.environ["GEMINI_API_KEY"])
-
-ADOJO = "/home/kitesu/SPECTRA-BlackBox/논문실험/agentdojo"
-sys.path.insert(0, ADOJO)
-PIPE_ROOT = Path("/home/kitesu/SPECTRA-BlackBox/New_Black_box/SPECTRA 6-STEP Scenario Generation pipeline")
+paths.load_env_keys()          # .env 가 있으면 API 키 로드(없으면 export 된 것만 사용)
+ADOJO = paths.use_agentdojo()  # agentdojo import 가능하게 sys.path 설정
+PIPE_ROOT = paths.PIPE_ROOT
 
 _client = None
 

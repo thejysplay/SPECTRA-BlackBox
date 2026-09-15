@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
 # 남은 (모델,도메인) 쌍을 순차 실행. run_asr.py는 파일 단위 skip이라 재개/중복 안전.
 set -u
-cd "/home/kitesu/SPECTRA-BlackBox/New_Black_box/SPECTRA 6-STEP Scenario Generation pipeline"
-PY=/home/kitesu/SPECTRA-BlackBox/논문실험/agentdojo/repo/.venv/bin/python
-declare -A TOT=([banking]=144 [travel]=141 [slack]=108)
+source "$(dirname "${BASH_SOURCE[0]}")/_lane_env.sh"
 
 # 순서: 프로바이더별로 묶음(DeepSeek 먼저, 그다음 Solar 3종). 이미 도는 쌍은 skip 로직이 처리.
 PAIRS=(
