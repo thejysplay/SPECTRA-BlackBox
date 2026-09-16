@@ -423,8 +423,8 @@ New_Black_box/SPECTRA 6-STEP Scenario Generation pipeline/
 
 | M | 마일스톤 | 산출 | 키 | 선행 |
 |---|---|---|---|---|
-| **M0** | 경로 이식성 · 실행환경 · LOO | ✅ `98c0dd2` `ff3014a` | ✗ | — |
-| **M1** | 소급 분석 — 경로정합-B · 도달깊이 · 판별력 | ✅ `167b710` · `retro_analysis.py` | ✗ | — |
+| **M0** | 경로 이식성 · 실행환경 · LOO | ✅ `e8a430c` `a00fdf2` | ✗ | — |
+| **M1** | 소급 분석 — 경로정합-B · 도달깊이 · 판별력 | ✅ `da6ca69` · `retro_analysis.py` | ✗ | — |
 | **M3** | 범위 선언(`task_scope.yaml`) → 자산 배치 → S1~S5 검증 | `scope.py` · `data/suites/` | ✗ | D1~D3 |
 | **M4** | 술어 계층 + `run_asr.py` 판정 교체 | `oracle/` | ✗ | M3 |
 | **M5** | banking 144건 재실행 (결정적 오라클) | 보정 ASR | **✓** | M4 |
