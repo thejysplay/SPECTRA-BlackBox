@@ -17,7 +17,8 @@ from pathlib import Path
 import random
 
 ROOT = Path(__file__).resolve().parent.parent
-sys.path.insert(0, str(ROOT.parent / "Scenario_Pipeline"))
+import paths  # noqa: E402
+sys.path.insert(0, str(paths.REPO_ROOT / "SPECTRA_AgentDojo" / "Scenario_Pipeline"))
 import backend  # noqa: E402
 from labels import ko  # noqa: E402
 from sequences_v7 import element_of  # noqa: E402
